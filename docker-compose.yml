@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # The Redis message queue
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+
+  # The Ollama LLM server
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  # The Flask web app (cashier)
+  web-app:
+    build: .
+    container_name: web-app
+    ports:
+      - "5001:5000"
+    depends_on:
+      - redis
+    command: flask --app app run --host=0.0.0.0
+
+  # The Celery worker (barista)
+  worker:
+    build: .
+    container_name: worker
+    depends_on:
+      - redis
+      - ollama
+    volumes:
+      - ./data:/app/data
+    command: celery -A worker.celery_app worker --loglevel=info
+
+volumes:
+  ollama_data:

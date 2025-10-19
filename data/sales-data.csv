@@ -1,0 +1,37 @@
+Date,City,Country,Venue,Attendance,Revenue,Min_Price,Max_Price,Avg_Price
+2019-03-18,Albany,United States,Times Union Center,11432,1268045.00,39.95,249.95,110.92
+2019-03-20,Boston,United States,TD Garden,13125,1670045.00,39.95,249.95,127.24
+2019-03-22,Buffalo,United States,KeyBank Center,14459,1470630.00,39.95,249.95,101.71
+2019-03-25,Washington DC,United States,Capital One Arena,13598,1832776.00,39.95,249.95,134.78
+2019-03-26,Philadelphia,United States,Wells Fargo Center,14787,1799863.00,39.95,249.95,121.72
+2019-03-28,Cleveland,United States,Rocket Mortgage FieldHouse,14763,1554750.00,39.95,249.95,105.31
+2019-03-30,Uncasville,United States,Mohegan Sun Arena,7097,1112692.00,39.95,249.95,156.78
+2019-04-01,Montreal,Canada,Bell Centre,14620,1440460.00,39.95,249.95,98.53
+2019-04-03,Toronto,Canada,Scotiabank Arena,14663,1565703.00,39.95,249.95,106.78
+2019-04-05,Detroit,United States,Little Caesars Arena,13698,1508715.00,39.95,249.95,110.14
+2019-04-25,Edmonton,Canada,Rogers Place,13947,1493948.00,39.95,249.95,107.11
+2019-04-27,Vancouver,Canada,Rogers Arena,14363,1617978.00,39.95,249.95,112.65
+2019-04-30,Portland,United States,Moda Center,13692,1469277.00,39.95,249.95,107.31
+2019-05-02,San Jose,United States,SAP Center,13605,1730098.00,39.95,189.95,127.17
+2019-05-03,Sacramento,United States,Golden 1 Center,13886,1737905.00,39.95,249.95,125.16
+2019-05-06,Los Angeles,United States,Staples Center,27916,3277659.00,39.95,249.95,117.41
+2019-05-10,Inglewood,United States,The Forum,14417,2149419.00,39.95,249.95,149.09
+2019-05-11,Las Vegas,United States,T-Mobile Arena,15194,1555349.00,39.95,249.95,102.36
+2019-05-14,Phoenix,United States,Talking Stick Resort Arena,13343,1492678.00,39.95,249.95,111.87
+2019-05-17,San Antonio,United States,AT&T Center,14860,1678465.00,39.95,249.95,113.09
+2019-05-19,Houston,United States,Toyota Center,12483,1602420.00,39.95,249.95,128.37
+2019-05-21,Dallas,United States,American Airlines Center,14262,1601901.00,39.95,249.95,112.32
+2019-05-23,Oklahoma City,United States,Chesapeake Energy Arena,12668,1347629.00,39.95,249.95,106.38
+2019-05-25,New Orleans,United States,Smoothie King Center,12889,1376994.00,39.95,249.95,106.84
+2019-05-31,Miami,United States,American Airlines Arena,26704,3146471.00,39.95,249.95,117.83
+2019-06-04,Chicago,United States,United Center,28941,3468667.00,39.95,249.95,119.85
+2019-06-07,Nashville,United States,Bridgestone Arena,13835,1437761.00,34.95,224.95,103.92
+2019-06-08,Atlanta,United States,State Farm Arena,12317,1220686.00,39.95,249.95,99.11
+2019-06-10,Charlotte,United States,Spectrum Center,14972,1550790.00,39.95,249.95,103.58
+2019-06-12,Pittsburgh,United States,PPG Paints Arena,14343,1518932.00,39.95,249.95,105.89
+2019-06-14,Brooklyn,United States,Barclays Center,28972,4378453.00,39.95,249.95,151.13
+2019-06-18,New York City,United States,Madison Square Garden,28576,5492909.00,39.95,249.95,192.22
+2019-06-21,Washington DC,United States,Capital One Arena,13897,1782835.00,39.95,249.95,128.29
+2019-06-22,Boston,United States,TD Garden,13242,1628077.00,39.95,249.95,122.95
+2019-06-24,Philadelphia,United States,Wells Fargo Center,14968,1807505.00,39.95,249.95,120.76
+2019-06-26,Toronto,Canada,Scotiabank Arena,15073,1539282.00,39.95,249.95,102.12

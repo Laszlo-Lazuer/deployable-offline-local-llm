@@ -1,0 +1,10 @@
+flask
+celery
+redis
+langchain
+langchain-community
+open-interpreter
+ollama
+pandas
+# Pin fastuuid to avoid Rust compilation OOM
+fastuuid==0.13.3
