@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-config
+  namespace: llm-analysis
+data:
+  REDIS_URL: "redis://redis:6379/0"
+  # Update OLLAMA_HOST based on your setup:
+  # - If Ollama runs in the cluster, use: "http://ollama:11434"
+  # - If Ollama runs on host machine, use: "http://host.docker.internal:11434"
+  # - If Ollama runs externally, use the external IP/hostname
+  OLLAMA_HOST: "http://host.docker.internal:11434"

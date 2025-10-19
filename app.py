@@ -52,6 +52,13 @@ def get_status(task_id):
 
     return jsonify(response)
 
+@app.route('/status/health', methods=['GET'])
+def health_check():
+    """
+    Health check endpoint for Kubernetes liveness/readiness probes.
+    """
+    return jsonify({"status": "healthy"}), 200
+
 
 if __name__ == "__main__":
     # Bind to 0.0.0.0 so the app is reachable from the host when run inside a container

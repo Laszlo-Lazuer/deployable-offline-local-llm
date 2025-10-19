@@ -1,0 +1,32 @@
+---
+# Optional: Ingress for exposing Flask API via domain name
+# Requires an Ingress controller (nginx, traefik, etc.) installed in the cluster
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flask-api-ingress
+  namespace: llm-analysis
+  annotations:
+    # Nginx ingress controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Uncomment for SSL/TLS
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx  # or your ingress class
+  rules:
+  - host: llm-analysis.example.com  # UPDATE THIS to your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-api
+            port:
+              number: 5000
+  # Uncomment for TLS
+  # tls:
+  # - hosts:
+  #   - llm-analysis.example.com
+  #   secretName: llm-analysis-tls

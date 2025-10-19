@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: llm-analysis
+spec:
+  replicas: 2  # Scale based on workload - each worker can handle 1 task at a time
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      containers:
+      - name: celery-worker
+        image: your-registry.io/local-llm-celery:latest  # UPDATE THIS
+        imagePullPolicy: Always
+        command: ["celery", "-A", "worker.celery_app", "worker", "--loglevel=info", "--concurrency=1"]
+        env:
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: llm-config
+              key: REDIS_URL
+        - name: OLLAMA_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: llm-config
+              key: OLLAMA_HOST
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: sandbox
+          mountPath: /app/sandbox
+        resources:
+          requests:
+            memory: "1Gi"    # Minimum for LLM inference
+            cpu: "500m"
+          limits:
+            memory: "4Gi"    # Maximum - adjust based on model size
+            cpu: "2000m"
+        # No liveness probe for workers - they manage their own lifecycle
+        # Readiness probe could cause issues with long-running tasks
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: data-pvc
+      - name: sandbox
+        emptyDir: {}  # Temporary workspace for each pod
+      restartPolicy: Always

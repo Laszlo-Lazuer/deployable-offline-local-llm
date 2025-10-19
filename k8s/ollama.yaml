@@ -1,0 +1,113 @@
+---
+# Optional: Deploy Ollama in the Kubernetes cluster
+# Only use this if you don't have Ollama running externally
+# This requires significant resources (4-8GB RAM minimum)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: llm-analysis
+spec:
+  selector:
+    app: ollama
+  ports:
+    - port: 11434
+      targetPort: 11434
+      protocol: TCP
+      name: api
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: llm-analysis
+spec:
+  replicas: 1  # Only 1 replica needed - models are loaded in memory
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        ports:
+        - containerPort: 11434
+          name: api
+        resources:
+          requests:
+            memory: "4Gi"     # Minimum for llama3:8b
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"     # Maximum - adjust based on model
+            cpu: "4000m"
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        livenessProbe:
+          httpGet:
+            path: /api/tags
+            port: 11434
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/tags
+            port: 11434
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: ollama-data
+        persistentVolumeClaim:
+          claimName: ollama-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-pvc
+  namespace: llm-analysis
+spec:
+  accessModes:
+    - ReadWriteOnce  # Single pod access
+  resources:
+    requests:
+      storage: 20Gi  # Models can be large
+  # storageClassName: standard
+---
+# Job to pull the llama3:8b model after Ollama starts
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull-model
+  namespace: llm-analysis
+spec:
+  template:
+    spec:
+      containers:
+      - name: pull-model
+        image: curlimages/curl:latest
+        command:
+        - sh
+        - -c
+        - |
+          # Wait for Ollama to be ready
+          until curl -s http://ollama:11434/api/tags; do
+            echo "Waiting for Ollama to start..."
+            sleep 5
+          done
+          
+          # Pull the model
+          curl -X POST http://ollama:11434/api/pull \
+            -H "Content-Type: application/json" \
+            -d '{"name": "llama3:8b"}'
+          
+          echo "Model pull initiated"
+      restartPolicy: OnFailure
+  backoffLimit: 3
