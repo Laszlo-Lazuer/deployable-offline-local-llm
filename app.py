@@ -1,3 +1,11 @@
+"""
+Local LLM Celery - AI-Powered Data Analysis Service
+Flask API for AI-powered data analysis using Celery and Open Interpreter.
+
+Author: Laszlo Lazuer
+Email: laszlo@squirrelyeye.com
+Copyright (c) 2025 Laszlo Lazuer. All rights reserved.
+"""
 import warnings
 
 # Suppress noisy pkg_resources deprecation warning coming from a dependency

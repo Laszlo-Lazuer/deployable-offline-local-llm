@@ -1244,12 +1244,16 @@ podman logs redis
 
 ## 📝 License
 
-MIT License - See LICENSE file for details
+**Proprietary and Confidential** - All rights reserved. This software is private and not licensed for public use, modification, or distribution.
 
-## 🤝 Contributing
+See [LICENSE](LICENSE) file for details.
 
-Contributions welcome! Please open an issue or submit a pull request.
+## 👤 Author
 
-## 📧 Support
+**Laszlo Lazuer**  
+📧 laszlo@squirrelyeye.com  
+🔗 GitHub: [@Laszlo-Lazuer](https://github.com/Laszlo-Lazuer)
 
-For issues and questions, please open a GitHub issue.
+---
+
+*Copyright © 2025 Laszlo Lazuer. All rights reserved.*

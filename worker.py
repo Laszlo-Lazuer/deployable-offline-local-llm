@@ -1,3 +1,11 @@
+"""
+Local LLM Celery - AI-Powered Data Analysis Service
+Celery worker for processing data analysis tasks with Open Interpreter.
+
+Author: Laszlo Lazuer
+Email: laszlo@squirrelyeye.com
+Copyright (c) 2025 Laszlo Lazuer. All rights reserved.
+"""
 import os
 import logging
 import requests
