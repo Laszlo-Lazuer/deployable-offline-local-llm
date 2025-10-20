@@ -136,7 +136,7 @@ cd local-llm-celery
 
 **Note:** GPU modes use native Ollama (outside container) for GPU acceleration. This provides 10x faster inference but requires GPU drivers and native Ollama installation.
 
-📘 **Documentation**: 
+📘 **Documentation**:
 - [GPU-MODES.md](GPU-MODES.md) - Compare all modes (CPU, Metal, NVIDIA)
 - [GPU-MACOS.md](GPU-MACOS.md) - macOS Metal setup (Apple Silicon)
 - [GPU-NVIDIA.md](GPU-NVIDIA.md) - NVIDIA GPU setup (Linux/Cloud)
@@ -178,7 +178,7 @@ ollama create llama3:8b -f Modelfile
 curl http://localhost:11434/api/tags
 ```
 
-> **Important**: 
+> **Important**:
 > - **GPU Mode** uses native Ollama for Metal acceleration (~30 sec/query)
 > - **CPU Mode** uses containerized Ollama (~5 min/query)
 > - Both modes use the same 8K context configuration for preventing truncation
@@ -1244,16 +1244,16 @@ podman logs redis
 
 ## 📝 License
 
-**Proprietary and Confidential** - All rights reserved. This software is private and not licensed for public use, modification, or distribution.
+MIT License - See [LICENSE](LICENSE) file for details.
 
-See [LICENSE](LICENSE) file for details.
+This project is open source and available under the MIT License.
 
 ## 👤 Author
 
-**Laszlo Lazuer**  
-📧 laszlo@squirrelyeye.com  
+**Laszlo Lazuer**
+📧 laszlo@squirrelyeye.com
 🔗 GitHub: [@Laszlo-Lazuer](https://github.com/Laszlo-Lazuer)
 
 ---
 
-*Copyright © 2025 Laszlo Lazuer. All rights reserved.*
+*Copyright © 2025 Laszlo Lazuer*
