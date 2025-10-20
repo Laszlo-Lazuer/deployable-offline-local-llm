@@ -215,10 +215,25 @@ def run_analysis_task(self, question, filename):
       cumulative = calculate_cumulative_inflation(2019, 2026)
       future_price = 100 * (1 + cumulative)
     
-    IMPORTANT: You MUST write Python code to answer this question. Do not just respond with text.
-    Write the necessary Python code, execute it, and provide the results with your analysis.
+    ═══════════════════════════════════════════════════════════════════════════
+    ⚠️  CRITICAL INSTRUCTION - READ THIS FIRST ⚠️
+    ═══════════════════════════════════════════════════════════════════════════
     
-    Now write and execute the Python code to answer the user's question.
+    YOU MUST IMMEDIATELY START WITH A PYTHON CODE BLOCK. NO TEXT EXPLANATIONS FIRST.
+    
+    Your FIRST response must be executable Python code in a markdown code block:
+    ```python
+    from file_loader import load_file
+    # Your code here...
+    ```
+    
+    DO NOT start with text like "Let me help you" or "Here's what we'll do".
+    DO NOT provide explanations before code.
+    START IMMEDIATELY WITH THE CODE BLOCK.
+    
+    After the code executes successfully, you may provide explanations.
+    
+    ═══════════════════════════════════════════════════════════════════════════
     """
 
     # Enable streaming to see progress
