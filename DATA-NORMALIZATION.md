@@ -2,26 +2,27 @@
 
 ## Overview
 
-The Local LLM Celery project includes intelligent data normalization capabilities that enable the LLM to handle datasets with different schemas, column names, and formats. Additionally, it provides **natural language column understanding**, allowing users to refer to columns using plain English instead of exact technical names.
+The Local LLM Celery project includes intelligent data normalization capabilities that enable the LLM to handle datasets with different schemas, column names, and formats **across all supported file types** (CSV, JSON, Excel, TSV, TXT). Additionally, it provides **natural language column understanding**, allowing users to refer to columns using plain English instead of exact technical names.
 
 ## Key Features
 
-### 1. Natural Language Column Mapping (Single File)
-Users don't need to know exact column names:
-- User says: **"average price"** → System finds: `Avg_Price`, `AVG_PRICE`, or `avg_price`
-- User says: **"when"** or **"date"** → System finds: `Date`, `Event_Date`, `timestamp`
-- User says: **"location"** or **"where"** → System finds: `City`, `Location`, `Venue`
-- User says: **"people attended"** → System finds: `Attendance`, `Attendees`, `Count`
+### 1. Natural Language Column Mapping (All File Formats)
+Users don't need to know exact column names, regardless of file format:
+- User says: **"average price"** → System finds: `Avg_Price`, `AVG_PRICE`, or `avg_price` (in CSV, JSON, Excel, TSV, or TXT)
+- User says: **"when"** or **"date"** → System finds: `Date`, `Event_Date`, `timestamp` (any format)
+- User says: **"location"** or **"where"** → System finds: `City`, `Location`, `Venue` (any format)
+- User says: **"people attended"** → System finds: `Attendance`, `Attendees`, `Count` (any format)
 
-### 2. Multi-File Schema Normalization
-When working with multiple datasets:
-- **Different column names**: `City` vs `Location` vs `Venue_City`
-- **Different data formats**: `2019-01-01` vs `01/01/2019` vs `1/1/19`
-- **Different schemas**: One file has 5 columns, another has 9
-- **Different value formats**: `Chicago` vs `CHICAGO` vs ` Chicago `
-- **Missing columns**: File A has `Country`, File B doesn't
+### 2. Multi-File & Multi-Format Schema Normalization
+When working with multiple datasets in different formats:
+- **Different column names**: `City` vs `Location` vs `Venue_City` (across CSV, JSON, Excel)
+- **Different data formats**: `2019-01-01` vs `01/01/2019` vs `1/1/19` (from any file type)
+- **Different schemas**: One CSV has 5 columns, one JSON has 9 fields, one Excel has 12 columns
+- **Different value formats**: `Chicago` vs `CHICAGO` vs ` Chicago ` (in any format)
+- **Missing columns**: CSV has `Country`, JSON doesn't, TSV does
+- **Different file formats**: CSV, JSON, Excel (.xlsx/.xls), TSV, TXT all supported
 
-Traditional ETL pipelines require predefined schemas and rigid transformations. This system **leverages the LLM's intelligence** to handle both natural language queries and schema variations automatically.
+Traditional ETL pipelines require predefined schemas and rigid transformations. This system **leverages the LLM's intelligence** and the **universal file loader** to handle both natural language queries and schema variations automatically across all supported file formats.
 
 ## Natural Language Column Understanding
 
@@ -212,44 +213,44 @@ Instead of hardcoded ETL rules, the LLM:
 
 **Scenario 1: Non-Technical Users**
 ```
-❌ User has to know: "Calculate mean of Avg_Price column"
-✅ User can ask: "What's the average price?"
+❌ User has to know: "Calculate mean of Avg_Price column in the CSV file"
+✅ User can ask: "What's the average price?" (works with CSV, JSON, Excel, TSV, TXT)
 ```
 
 **Scenario 2: Acronyms and Abbreviations**
 ```
-Data has columns: AVG_PRICE, MIN_PRICE, MAX_PRICE
+Data has columns: AVG_PRICE (CSV), avgPrice (JSON), Avg_Price (Excel)
 ❌ User must use exact: "What is the AVG_PRICE?"
-✅ User can ask naturally: "What's the average price?"
+✅ User can ask naturally: "What's the average price?" (works across all formats)
 ```
 
 **Scenario 3: Varying Column Names**
 ```
 Different files use: Avg_Price, avg_price, AveragePrice, average_price
-❌ Traditional: Requires exact matching
-✅ With LLM: Understands all variations
+❌ Traditional: Requires exact matching per file
+✅ With LLM + Universal Loader: Understands all variations across all formats
 ```
 
-**Scenario 4: Multiple Data Sources**
+**Scenario 4: Multiple Data Sources in Different Formats**
 ```
-Marketing team: Event_Date, Location, Ticket_Cost
-Finance team: Date, City, Revenue
-Operations: show_date, venue_city, gross_sales
-❌ Traditional: Rigid ETL pipeline required
-✅ With LLM: Automatic normalization
+Marketing team: event_data.csv with Event_Date, Location, Ticket_Cost
+Finance team: revenue.json with {"date": "...", "city": "...", "revenue": ...}
+Operations: sales.xlsx with show_date, venue_city, gross_sales
+❌ Traditional: Rigid ETL pipeline required, format-specific parsers
+✅ With LLM + Universal Loader: Automatic normalization across all formats
 ```
 
 ## Features
 
-### Automatic Schema Detection
+### Automatic Schema Detection (All File Formats)
 
-The system automatically generates schema information for all files:
+The system automatically generates schema information for all supported file formats:
 
 ```python
 📊 DATA SCHEMA ANALYSIS
 ================================================================================
 
-📁 concert-sales.csv
+📁 concert-sales.csv (CSV format)
    Rows: 5 | Columns: 5
 
    Columns:
@@ -257,56 +258,85 @@ The system automatically generates schema information for all files:
    - Location             (object    ) → ['Chicago', 'New York']
    - Ticket_Cost          (float64   ) → [125.0, 135.5]
 
-📁 sales-data.csv
+📁 revenue-data.json (JSON format)
+   Rows: 8 | Columns: 4
+
+   Columns:
+   - date                 (object    ) → ['2019-05-10', '2019-06-15']
+   - city                 (object    ) → ['Boston', 'Miami']
+   - revenue              (float64   ) → [45000.0, 52000.0]
+
+📁 sales-data.csv (CSV format)
    Rows: 36 | Columns: 9
 
    Columns:
    - Date                 (object    ) → ['2019-03-18', '2019-03-20']
    - City                 (object    ) → ['Albany', 'Boston']
    - Avg_Price            (float64   ) → [110.92, 127.24]
+
+📁 q2-sales.xlsx (Excel format)
+   Rows: 12 | Columns: 7
+
+   Columns:
+   - EventDate            (datetime64) → [2019-04-01, 2019-05-15]
+   - Location             (object    ) → ['Seattle', 'Portland']
+   - AvgTicketPrice       (float64   ) → [98.5, 115.0]
 ```
 
-### Intelligent Column Mapping
+**Note**: The universal file loader (`file_loader.py`) handles all formats transparently, converting them to pandas DataFrames for schema detection.
 
-The system suggests which columns across files represent similar data:
+### Intelligent Column Mapping (Cross-Format)
+
+The system suggests which columns across different file formats represent similar data:
 
 ```
 Date Columns:
-  - concert-sales.csv:Event_Date
-  - sales-data.csv:Date
-  - q2-sales.csv:Date
+  - concert-sales.csv:Event_Date (CSV)
+  - revenue-data.json:date (JSON)
+  - sales-data.csv:Date (CSV)
+  - q2-sales.xlsx:EventDate (Excel)
+  - test-data.tsv:Date (TSV)
 
 Price Columns:
-  - concert-sales.csv:Ticket_Cost
-  - sales-data.csv:Avg_Price
-  - q2-sales.csv:Avg_Price
+  - concert-sales.csv:Ticket_Cost (CSV)
+  - revenue-data.json:revenue (JSON)
+  - sales-data.csv:Avg_Price (CSV)
+  - q2-sales.xlsx:AvgTicketPrice (Excel)
+  - test-data.tsv:Price (TSV)
 
 Location Columns:
-  - concert-sales.csv:Location
-  - sales-data.csv:City
-  - q2-sales.csv:City
+  - concert-sales.csv:Location (CSV)
+  - revenue-data.json:city (JSON)
+  - sales-data.csv:City (CSV)
+  - q2-sales.xlsx:Location (Excel)
+  - test-data.tsv:City (TSV)
 ```
 
-### LLM Normalization Workflow
+**Cross-Format Intelligence**: The LLM understands semantic similarity regardless of file format, using the universal file loader to access all data consistently.
 
-The LLM follows a systematic approach:
+### LLM Normalization Workflow (Format-Agnostic)
 
-1. **Load** each file individually
-2. **Inspect** schema and print columns
-3. **Map** columns to standard names
-4. **Rename** columns using `.rename()`
-5. **Standardize** values (strip, case, types)
-6. **Align** schemas (add missing columns)
-7. **Combine** with `pd.concat()`
+The LLM follows a systematic approach that works across all file formats:
+
+1. **Load** each file using the universal file loader (`load_file()`)
+2. **Inspect** schema and print columns (format detected automatically)
+3. **Map** columns to standard names (works across CSV, JSON, Excel, TSV, TXT)
+4. **Rename** columns using `.rename()` on DataFrames
+5. **Standardize** values (strip, case, types) - same for all formats
+6. **Align** schemas (add missing columns) - format-independent
+7. **Combine** with `pd.concat()` - unified DataFrame regardless of source format
+
+**Key Advantage**: The universal file loader abstracts away format differences, allowing the same normalization logic to work on CSV, JSON, Excel, TSV, and TXT files.
 
 ## Usage Examples
 
-### Example 1: Different Column Names
+### Example 1: Different Column Names Across Formats
 
 **Files:**
 ```
-concert-sales.csv: Event_Date, Location, Ticket_Cost
-sales-data.csv:    Date,       City,     Avg_Price
+concert-sales.csv (CSV):  Event_Date, Location, Ticket_Cost
+revenue-data.json (JSON): {"date": "...", "city": "...", "revenue": ...}
+sales-data.xlsx (Excel):  EventDate, VenueCity, AvgPrice
 ```
 
 **Query:**
@@ -314,24 +344,30 @@ sales-data.csv:    Date,       City,     Avg_Price
 curl -X POST http://localhost:5001/analyze \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "Combine concert-sales.csv and sales-data.csv. They have different column names - normalize first, then calculate average price across all data.",
+    "question": "Combine concert-sales.csv, revenue-data.json, and sales-data.xlsx using the universal file loader. They have different column names and formats - normalize first, then calculate average price across all data.",
     "filename": "sales-data.csv"
   }'
 ```
 
 **LLM Process:**
 ```python
-# Step 1: Load and inspect
-df1 = pd.read_csv('/app/data/concert-sales.csv')
-df2 = pd.read_csv('/app/data/sales-data.csv')
+# Step 1: Load using universal file loader (format auto-detected)
+from file_loader import load_file
 
-print("File 1 columns:", df1.columns.tolist())
+df1 = load_file('/app/data/concert-sales.csv')      # Auto-detects CSV
+df2 = load_file('/app/data/revenue-data.json')      # Auto-detects JSON
+df3 = load_file('/app/data/sales-data.xlsx')        # Auto-detects Excel
+
+print("File 1 (CSV) columns:", df1.columns.tolist())
 # ['Event_Date', 'Location', 'Ticket_Cost']
 
-print("File 2 columns:", df2.columns.tolist())
-# ['Date', 'City', 'Avg_Price']
+print("File 2 (JSON) columns:", df2.columns.tolist())
+# ['date', 'city', 'revenue']
 
-# Step 2: Normalize column names
+print("File 3 (Excel) columns:", df3.columns.tolist())
+# ['EventDate', 'VenueCity', 'AvgPrice']
+
+# Step 2: Normalize column names (same logic regardless of source format)
 df1 = df1.rename(columns={
     'Event_Date': 'date',
     'Location': 'city',
@@ -339,14 +375,21 @@ df1 = df1.rename(columns={
 })
 
 df2 = df2.rename(columns={
-    'Date': 'date',
-    'City': 'city',
-    'Avg_Price': 'price'
+    'date': 'date',
+    'city': 'city',
+    'revenue': 'price'  # Note: JSON had "revenue" instead of "price"
 })
 
-# Step 3: Standardize values
+df3 = df3.rename(columns={
+    'EventDate': 'date',
+    'VenueCity': 'city',
+    'AvgPrice': 'price'
+})
+
+# Step 3: Standardize values (format-agnostic)
 df1['city'] = df1['city'].str.strip().str.title()
 df2['city'] = df2['city'].str.strip().str.title()
+df3['city'] = df3['city'].str.strip().str.title()
 
 # Step 4: Align schemas (add missing columns)
 for col in df2.columns:
@@ -357,14 +400,20 @@ for col in df1.columns:
     if col not in df2.columns:
         df2[col] = None
 
-# Step 5: Combine
-combined = pd.concat([df1, df2], ignore_index=True)
+for col in df3.columns:
+    if col not in df1.columns:
+        df1[col] = None
+
+# ... (repeat for all combinations)
+
+# Step 5: Combine (all are now DataFrames regardless of source format)
+combined = pd.concat([df1, df2, df3], ignore_index=True)
 
 # Step 6: Analyze
 average_price = combined['price'].mean()
 ```
 
-**Result:** Successfully combines files with different schemas.
+**Result:** Successfully combines CSV, JSON, and Excel files with different schemas using universal loader.
 
 ### Example 2: Complete Multi-File Analysis
 

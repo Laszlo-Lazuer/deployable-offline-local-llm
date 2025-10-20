@@ -15,9 +15,25 @@ ollama --version
 
 # Check if llama3:8b model is available
 ollama list | grep llama3
+
+# Check Podman machine has adequate memory (8GB minimum)
+podman machine list
 ```
 
-If anything is missing:
+**⚠️ Important**: The Podman machine must have **at least 8GB RAM** allocated. The llama3:8b model requires 4.6GB, and you need additional memory for containers and build processes.
+
+If your Podman machine has less than 8GB:
+```bash
+# Stop and remove existing machine
+podman machine stop
+podman machine rm
+
+# Create new machine with 8GB RAM
+podman machine init --memory 8192 --cpus 4 --disk-size 100
+podman machine start
+```
+
+If anything else is missing:
 - **Podman**: `brew install podman` (macOS) or follow [docs](https://podman.io/getting-started/installation)
 - **Ollama**: `brew install ollama` (macOS) or visit [ollama.ai](https://ollama.ai)
 - **llama3:8b**: `ollama pull llama3:8b`

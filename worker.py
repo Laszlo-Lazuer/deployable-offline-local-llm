@@ -143,15 +143,19 @@ def run_analysis_task(question, filename):
     
     Instructions:
     1. You can load and work with ANY of the available data files as needed to answer the question
-    2. Use the universal file loader to load ANY supported format:
-       - Import: from file_loader import load_file
+    2. ALWAYS start your code by importing the file loader:
+       
+       from file_loader import load_file
+       
+    3. Use the universal file loader to load ANY supported format:
        - Usage: df = load_file('/app/data/filename.ext')
        - Supported: CSV (.csv), JSON (.json), Excel (.xlsx, .xls), TSV (.tsv), Text (.txt)
        - This automatically detects the file type and loads it into a pandas DataFrame
-    3. If the question requires data from multiple files, load and combine them
-    4. Write and execute Python code to answer the question
-    5. Show your work and calculations
-    6. Provide the final answer
+       - Example: df = load_file('/app/data/test-sales.tsv')  # Auto-detects TSV format
+    4. If the question requires data from multiple files, load and combine them
+    5. Write and execute Python code to answer the question
+    6. Show your work and calculations
+    7. Provide the final answer
     
     CRITICAL - NATURAL LANGUAGE COLUMN UNDERSTANDING:
     - Users may refer to columns using natural language, NOT exact column names

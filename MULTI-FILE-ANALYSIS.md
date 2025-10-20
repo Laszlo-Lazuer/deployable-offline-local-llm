@@ -1,32 +1,51 @@
-# Multi-File Analysis
+# Multi-File & Multi-Format Analysis
 
 ## Overview
 
-The Local LLM Celery system automatically provides the LLM with access to **all uploaded data files**, enabling sophisticated multi-file analysis without requiring users to explicitly specify which files to use.
+The Local LLM Celery system automatically provides the LLM with access to **all uploaded data files** in **any supported format** (CSV, JSON, Excel, TSV, TXT), enabling sophisticated multi-file and mixed-format analysis without requiring users to explicitly specify file types or implement custom loaders.
 
 ## How It Works
 
-### Automatic File Discovery
+### Automatic File Discovery & Format Detection
 
 When you submit an analysis request, the worker:
 
 1. **Scans the data directory** (`/app/data`) for all available files
-2. **Lists files in the prompt** with their names and sizes
-3. **Gives the LLM full access** to load any combination of files needed
-4. **Executes Python code** that can read, merge, and analyze multiple datasets
+2. **Detects file formats automatically** using the universal file loader
+3. **Lists files in the prompt** with their names, sizes, and detected formats
+4. **Gives the LLM full access** to load any combination of files in any format
+5. **Executes Python code** that can read, merge, and analyze multiple datasets across formats
+
+### Supported File Formats
+
+All formats are automatically detected and loaded via the universal file loader (`file_loader.py`):
+
+| Format | Extensions | Auto-Detected | Notes |
+|--------|-----------|---------------|-------|
+| CSV | `.csv` | ✅ | Comma-separated values |
+| JSON | `.json` | ✅ | Array, nested objects, JSON Lines |
+| Excel | `.xlsx`, `.xls` | ✅ | Modern and legacy Excel formats |
+| TSV | `.tsv` | ✅ | Tab-separated values |
+| TXT | `.txt` | ✅ | Auto-detects delimiter (comma, tab, pipe, etc.) |
 
 ### Prompt Context
 
-The LLM receives information about all available files:
+The LLM receives information about all available files with format details:
 
 ```
 Available data files in /app/data:
-  - sales-data.csv (3,233 bytes)
-  - q2-sales.csv (204 bytes)
-  - inventory.csv (15,482 bytes)
+  - sales-data.csv (3,233 bytes) [CSV]
+  - test-sales.json (567 bytes) [JSON]
+  - q2-sales.xlsx (8,192 bytes) [Excel]
+  - test-sales.tsv (948 bytes) [TSV]
+  - inventory.txt (15,482 bytes) [TXT]
+
+Use the universal file loader to load ANY format:
+  from file_loader import load_file
+  df = load_file('/app/data/filename.ext')
 ```
 
-The LLM can then write Python code to load and work with any of these files as needed.
+The LLM can then write Python code to load and work with any combination of files in any format.
 
 ## Usage Examples
 
@@ -41,9 +60,9 @@ curl -X POST http://localhost:5001/analyze \
   }'
 ```
 
-The `filename` parameter specifies the **primary file** for analysis.
+The `filename` parameter specifies the **primary file** for analysis. File format is automatically detected.
 
-### Multi-File Analysis (Automatic)
+### Multi-File Analysis (Same Format)
 
 ```bash
 curl -X POST http://localhost:5001/analyze \
@@ -57,6 +76,18 @@ curl -X POST http://localhost:5001/analyze \
 - Use the first available file as the primary reference
 - Have access to all other files in the data directory
 - Load and combine files as needed to answer the question
+
+### Mixed Format Analysis (NEW!)
+
+```bash
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Load sales-data.csv, test-sales.json, and q2-data.xlsx. Use the universal file loader to combine all three formats and calculate total revenue across all sources."
+  }'
+```
+
+**Combines CSV, JSON, and Excel** - the universal file loader handles all formats transparently.
 
 ### Explicit Multi-File Instructions
 

@@ -112,7 +112,7 @@ curl -X POST http://localhost:5001/analyze \
 
 ## Multi-File Analysis
 
-### Compare Two Datasets
+### Compare Two Datasets (CSV)
 
 **Setup:**
 ```bash
@@ -132,14 +132,44 @@ curl -X POST http://localhost:5001/analyze \
   }'
 ```
 
-### Aggregate Across All Files
+### Mixed Format Analysis (CSV + JSON + TSV)
+
+**Setup:**
+```bash
+# Upload different file formats
+make data-upload FILE=data/sales-data.csv
+make data-upload FILE=data/test-sales.json
+make data-upload FILE=data/test-sales.tsv
+```
 
 **Query:**
 ```bash
 curl -X POST http://localhost:5001/analyze \
   -H "Content-Type: application/json" \
   -d '{
-    "question": "Load all CSV files in the data directory and calculate the combined total revenue across all files"
+    "question": "Load sales-data.csv (CSV format), test-sales.json (JSON format), and test-sales.tsv (TSV format). Combine all three using the universal file loader and calculate the total sales across all formats. Show how many records came from each file type."
+  }'
+```
+
+**Expected Output:**
+```
+Loaded 3 files:
+- sales-data.csv: 36 records (CSV format)
+- test-sales.json: 10 records (JSON format)
+- test-sales.tsv: 10 records (TSV format)
+
+Total combined sales: $XX,XXX,XXX.XX
+Total records: 56
+```
+
+### Aggregate Across All Files (All Formats)
+
+**Query:**
+```bash
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Load all data files (CSV, JSON, Excel, TSV, TXT) in the data directory using the universal file loader and calculate the combined total revenue across all files. Show a breakdown by file format."
   }'
 ```
 
@@ -147,7 +177,7 @@ curl -X POST http://localhost:5001/analyze \
 ```json
 {
   "status": "SUCCESS",
-  "result": "Total combined revenue from all files: $70,182,767.00 (from 2 files: sales-data.csv and q2-sales.csv)"
+  "result": "Total combined revenue from all files: $70,182,767.00\n\nBreakdown by format:\n- CSV files (2): $65,000,000.00\n- JSON files (1): $3,500,000.00\n- TSV files (1): $1,682,767.00\n- Excel files (0): $0.00"
 }
 ```
 
