@@ -1,138 +1,129 @@
-# Performance Comparison Examples
+# Performance Benchmarks - Real Test Results
 
-This document shows real-world examples comparing CPU and GPU performance.
+This document shows real-world test results from actual runs on Apple M3 Max hardware.
 
-## 📊 Example Query: "What is the median Avg_Price?"
+## 📊 Test Environment
 
-### Test Setup
-- **Dataset**: `sales-data.csv` (36 rows, concert sales data)
-- **Model**: llama3:8b
-- **Query**: "What is the median Avg_Price?"
-- **Context Window**: 8192 tokens
-
----
-
-## 💻 CPU Mode Performance
-
-### Command:
-```bash
-./start.sh cpu
-
-# Submit query
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"question":"What is the median Avg_Price?","filename":"sales-data.csv"}' \
-  http://localhost:5001/analyze
-```
-
-### Timeline:
-```
-00:00 - Task submitted
-00:01 - Model loading started
-00:06 - Model loaded (5 seconds)
-00:07 - Code generation started
-04:36 - Code generated (4 minutes 29 seconds)
-04:37 - Code execution started
-04:42 - Code executed (5 seconds)
-05:24 - Final response generated (42 seconds)
-05:24 - COMPLETE
-```
-
-### Performance Metrics:
-- **Total Time**: ~5 minutes 24 seconds (324 seconds)
-- **Model Load**: 5 seconds
-- **Code Generation**: 4 minutes 29 seconds (~5-8 tokens/sec)
-- **Execution**: 5 seconds
-- **Analysis**: 42 seconds
-- **CPU Usage**: 400-600% (4-6 cores fully utilized)
-- **Memory**: ~6GB RAM
-
-### Result:
-```
-The median Avg_Price is: 112.485
-```
+- **Hardware**: Apple M3 Max (Metal 4)
+- **Model**: llama3:8b (8K context window)
+- **Concurrency**: 1 (sequential processing)
+- **Dataset**: sales-data.csv (36 rows, 2019 concert sales data)
 
 ---
 
-## 🎮 GPU Mode Performance
+## Test 1: Simple Calculation
 
-### Command:
-```bash
-./start.sh gpu
+### Query: "What is the median Avg_Price?"
 
-# Submit query (same as above)
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"question":"What is the median Avg_Price?","filename":"sales-data.csv"}' \
-  http://localhost:5001/analyze
+### 💻 CPU Mode (Containerized Ollama)
+
+**Task ID**: `eea08ae1-e0af-4545-b67a-030a0e27637d`
+
+```
+Started:   04:20:33
+Completed: 04:26:11
+Total Time: 338.36 seconds (5 minutes 38 seconds)
 ```
 
-### Timeline (with RTX 3080):
+**Performance Breakdown:**
+- **Model Loading**: ~6 seconds
+- **LLM Inference**: ~330 seconds (~5-10 tokens/sec)
+- **Code Execution**: <1 second
+- **Issues**: Empty code block on first attempt, self-corrected
+
+**Result**: ✅ `Median Avg_Price: 112.485`
+
+### 🎮 GPU Mode (Native Ollama + Metal)
+
+**Task ID**: `1de1ca33-38a4-47f6-999c-4e7671a51021`
+
 ```
-00:00 - Task submitted
-00:01 - Model loading started
-00:03 - Model loaded (2 seconds)
-00:03 - Code generation started
-00:45 - Code generated (42 seconds)
-00:46 - Code execution started
-00:48 - Code executed (2 seconds)
-01:03 - Final response generated (15 seconds)
-01:03 - COMPLETE
+Started:   04:12:xx
+Completed: 04:12:xx
+Total Time: 34.75 seconds
 ```
 
-### Performance Metrics:
-- **Total Time**: ~1 minute 3 seconds (63 seconds)
-- **Model Load**: 2 seconds (2.5x faster)
-- **Code Generation**: 42 seconds (~60-80 tokens/sec, 6-8x faster)
-- **Execution**: 2 seconds (2.5x faster)
-- **Analysis**: 15 seconds (2.8x faster)
-- **GPU Usage**: 85-100% utilization
-- **VRAM**: ~6GB
-- **RAM**: ~2GB
+**Performance Breakdown:**
+- **Model Loading**: ~2-3 seconds
+- **LLM Inference**: ~30 seconds (~50-100 tokens/sec)
+- **Code Execution**: <1 second
+- **Issues**: None - code generated correctly on first attempt
 
-### Result:
-```
-The median Avg_Price is: 112.485
-```
+**Result**: ✅ `Median Avg_Price: 112.485`
+
+### 📈 Comparison
+
+| Metric | CPU Mode | GPU Mode | Speedup |
+|--------|----------|----------|---------|
+| **Total Time** | 338s (5m 38s) | 35s | **9.7x faster** |
+| Model Load | ~6s | ~2-3s | 2-3x faster |
+| LLM Inference | ~330s | ~30s | 11x faster |
+| Tokens/sec | ~5-10 | ~50-100 | 10x faster |
+| Code Execution | <1s | <1s | Same |
 
 ---
 
-## 📈 Side-by-Side Comparison
+## Test 2: Complex Query with Web Scraping
 
-| Metric | CPU Mode | GPU Mode (RTX 3080) | Speedup |
-|--------|----------|---------------------|---------|
-| **Total Time** | 5m 24s | 1m 3s | **5.1x faster** |
-| Model Load | 5s | 2s | 2.5x faster |
-| Code Gen | 4m 29s | 42s | 6.4x faster |
-| Execution | 5s | 2s | 2.5x faster |
-| Analysis | 42s | 15s | 2.8x faster |
-| Token Speed | 5-8 tok/s | 60-80 tok/s | 10x faster |
-| Power Usage | 45W (CPU) | 220W (GPU+CPU) | - |
-| **Cost/Query** | $0.00 (local) | $0.00 (local) | Same |
+### Query: "What would the median Avg_Price be in 2026 dollars, adjusted for inflation from the date in the data?"
+
+### 💻 CPU Mode (Containerized Ollama)
+
+**Task ID**: `9c4c3d58-4e44-45e2-b681-76bcdc2551d4`
+
+```
+Started:   04:28:28
+Completed: 04:40:37
+Total Time: 728.40 seconds (12 minutes 8 seconds)
+```
+
+**Performance Breakdown:**
+- **Model Loading**: ~3 seconds
+- **LLM Inference**: ~720 seconds (~5-10 tokens/sec)
+- **Web Scraping**: Fetched 112 years of inflation data from usinflationcalculator.com
+- **Code Execution**: ~5 seconds
+- **Cache**: Saved inflation data to `/app/cache/inflation_data.json`
+
+**Results**: 
+- ✅ `2019 Median Price: $112.49`
+- ✅ `2026 Adjusted Price: $144.30`
+- ✅ `Cumulative Inflation (2019→2026): ~28.3%`
+
+### 🎮 GPU Mode (Native Ollama + Metal)
+
+**Not tested**, but estimated based on Test 1 ratio:
+
+```
+Estimated Time: ~60-90 seconds
+Expected Speedup: ~10x faster
+```
+
+### 📈 Comparison
+
+| Metric | CPU Mode | GPU Mode (Est.) | Speedup |
+|--------|----------|-----------------|---------|
+| **Total Time** | 728s (12m 8s) | ~60-90s | **~10x faster** |
+| LLM Inference | ~720s | ~60s | ~12x faster |
+| Web Scraping | Same | Same | No change |
+| Code Execution | ~5s | ~5s | Same |
+
+### Why 2x Longer than Simple Query?
+
+1. 🧮 **More complex reasoning**: Multi-step calculation
+2. 🌐 **Web scraping**: Downloaded inflation data
+3. 💾 **Data caching**: Saved 112 years of inflation rates
+4. 📝 **Additional imports**: inflation_cache functions
+5. 💬 **Longer explanation**: More detailed LLM response
 
 ---
 
-## 🧪 Complex Query Example
+## 📊 Performance Summary Table
 
-### Query: "Group concerts by country, calculate total revenue, average attendance, and median ticket price for each country, then rank by total revenue"
-
-### CPU Performance:
-```
-Total Time: ~7 minutes 15 seconds
-- Model Load: 5 seconds
-- Code Generation: 6 minutes 30 seconds
-- Execution: 8 seconds
-- Analysis: 32 seconds
-```
-
-### GPU Performance (RTX 3080):
-```
-Total Time: ~1 minute 28 seconds
-- Model Load: 2 seconds
-- Code Generation: 1 minute 5 seconds
-- Execution: 4 seconds
-- Analysis: 17 seconds
-```
-
-**Speedup: 4.9x faster on GPU**
+| Test Type | CPU Mode | GPU Mode | Speedup |
+|-----------|----------|----------|---------|
+| **Simple Query** | 338s (5m 38s) | 35s | **9.7x** |
+| **Complex Query** | 728s (12m 8s) | ~60-90s (est.) | **~10x** |
+| **Tokens/sec** | ~5-10 | ~50-100 | **10x** |
 
 ---
 

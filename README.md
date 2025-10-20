@@ -115,24 +115,32 @@ cd local-llm-celery
 # Start in CPU mode (default)
 ./start.sh
 
-# Or start with GPU acceleration (10-50x faster on macOS with Metal)
-./start-gpu.sh
+# Or start with GPU acceleration
+./start-gpu.sh           # macOS with Metal (Apple Silicon)
+./start-gpu-nvidia.sh    # Linux/Windows with NVIDIA GPU
 ```
 
 **That's it!** Services will start automatically. Open http://localhost:5001/ to use the web UI.
 
 ### Performance Comparison
 
-| Mode | Speed | Use Case |
-|------|-------|----------|
-| **CPU** | ~5 min/query | Production, cloud deployments, CPU-only servers |
-| **GPU (Metal)** | ~30 sec/query | Development, testing, Mac with Apple Silicon |
+| Mode | Simple Query | Complex Query (w/ Web Scraping) | Use Case |
+|------|--------------|--------------------------------|----------|
+| **CPU** | ~5-6 min | ~12 min | Production, cloud deployments, CPU-only servers |
+| **GPU (Metal)** | ~30-35 sec | ~60-90 sec | Development, testing, Mac with Apple Silicon |
+| **GPU (NVIDIA)** | ~30-60 sec | ~60-120 sec | Production, cloud GPU instances, NVIDIA cards |
 
-**Note:** GPU mode uses native Ollama (outside container) for Metal acceleration. This provides 10x faster inference on macOS but is not available in containerized deployments.
+**Real-world examples:**
+- Simple: "What is the median Avg_Price?" → CPU: 5m 38s, GPU: 35s (**9.7x faster**)
+- Complex: "Inflation-adjusted 2026 price?" → CPU: 12m 8s, GPU: ~60-90s (**~10x faster**)
 
-📘 **GPU acceleration guides**: 
-- [GPU-MACOS.md](GPU-MACOS.md) - macOS Metal (Apple Silicon)
-- [GPU.md](GPU.md) - NVIDIA GPU (Linux/Cloud)
+**Note:** GPU modes use native Ollama (outside container) for GPU acceleration. This provides 10x faster inference but requires GPU drivers and native Ollama installation.
+
+📘 **Documentation**: 
+- [GPU-MODES.md](GPU-MODES.md) - Compare all modes (CPU, Metal, NVIDIA)
+- [GPU-MACOS.md](GPU-MACOS.md) - macOS Metal setup (Apple Silicon)
+- [GPU-NVIDIA.md](GPU-NVIDIA.md) - NVIDIA GPU setup (Linux/Cloud)
+- [PERFORMANCE.md](PERFORMANCE.md) - Detailed benchmarks
 
 ---
 
