@@ -9,6 +9,8 @@ This module helps the LLM:
 2. Detect schema and column mappings
 3. Normalize data into consistent formats
 4. Handle common data quality issues
+
+Supports all file formats: CSV, JSON, Excel, TSV, Text
 """
 
 import os
@@ -16,6 +18,7 @@ import json
 import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+from file_loader import load_file, get_file_type, SUPPORTED_EXTENSIONS
 
 
 # Cache directory for schema mappings
@@ -30,6 +33,7 @@ def ensure_schema_cache():
 def get_file_schema(filepath: str) -> Dict[str, Any]:
     """
     Analyze a file and extract its schema information.
+    Supports all file formats: CSV, JSON, Excel, TSV, Text
     
     Args:
         filepath: Path to the data file
@@ -38,12 +42,19 @@ def get_file_schema(filepath: str) -> Dict[str, Any]:
         dict: Schema information including columns, types, sample data
     """
     try:
-        df = pd.read_csv(filepath, nrows=5)  # Read first 5 rows for inspection
+        # Load file using universal loader (first 5 rows for inspection)
+        df = load_file(filepath, nrows=5)
+        
+        # Get full row count
+        full_df = load_file(filepath)
+        row_count = len(full_df)
+        del full_df  # Free memory
         
         schema = {
             "filename": os.path.basename(filepath),
             "filepath": filepath,
-            "row_count": len(pd.read_csv(filepath)),
+            "file_type": get_file_type(filepath),
+            "row_count": row_count,
             "column_count": len(df.columns),
             "columns": {},
             "sample_data": df.head(3).to_dict('records')
@@ -63,6 +74,7 @@ def get_file_schema(filepath: str) -> Dict[str, Any]:
         return {
             "filename": os.path.basename(filepath),
             "filepath": filepath,
+            "file_type": get_file_type(filepath) if os.path.exists(filepath) else "Unknown",
             "error": str(e)
         }
 
@@ -70,6 +82,7 @@ def get_file_schema(filepath: str) -> Dict[str, Any]:
 def generate_schema_summary(data_dir: str = "/app/data") -> str:
     """
     Generate a comprehensive schema summary for all files in data directory.
+    Supports all file formats: CSV, JSON, Excel, TSV, Text
     
     Args:
         data_dir: Directory containing data files
@@ -77,10 +90,13 @@ def generate_schema_summary(data_dir: str = "/app/data") -> str:
     Returns:
         str: Formatted schema summary for LLM consumption
     """
-    files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
+    # Get all supported files
+    all_files = os.listdir(data_dir)
+    supported_exts = tuple(SUPPORTED_EXTENSIONS.keys())
+    files = [f for f in all_files if f.lower().endswith(supported_exts)]
     
     if not files:
-        return "No CSV files found in data directory."
+        return f"No supported data files found in {data_dir}.\nSupported formats: {', '.join(SUPPORTED_EXTENSIONS.values())}"
     
     summary = "📊 DATA SCHEMA ANALYSIS\n"
     summary += "=" * 80 + "\n\n"
@@ -90,10 +106,10 @@ def generate_schema_summary(data_dir: str = "/app/data") -> str:
         schema = get_file_schema(filepath)
         
         if "error" in schema:
-            summary += f"❌ {filename}: ERROR - {schema['error']}\n\n"
+            summary += f"❌ {filename} ({schema.get('file_type', 'Unknown')}): ERROR - {schema['error']}\n\n"
             continue
         
-        summary += f"📁 {filename}\n"
+        summary += f"📁 {filename} ({schema['file_type']})\n"
         summary += f"   Rows: {schema['row_count']:,} | Columns: {schema['column_count']}\n\n"
         
         summary += "   Columns:\n"
@@ -117,13 +133,19 @@ def suggest_column_mappings(data_dir: str = "/app/data") -> Dict[str, Dict[str, 
     Returns a mapping suggesting which columns might represent the same data
     across different files, even if named differently.
     
+    Supports all file formats: CSV, JSON, Excel, TSV, Text
+    
     Args:
         data_dir: Directory containing data files
         
     Returns:
         dict: Suggested column mappings between files
     """
-    files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
+    # Get all supported files
+    all_files = os.listdir(data_dir)
+    supported_exts = tuple(SUPPORTED_EXTENSIONS.keys())
+    files = [f for f in all_files if f.lower().endswith(supported_exts)]
+    
     schemas = {}
     
     # Get all schemas

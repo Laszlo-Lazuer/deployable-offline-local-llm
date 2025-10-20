@@ -1,0 +1,11 @@
+Date	City	Country	Venue	Attendance	Revenue	Min_Price	Max_Price	Avg_Price
+2019-03-18	Albany	United States	Times Union Center	11432	1268045.00	39.95	249.95	110.92
+2019-03-20	Boston	United States	TD Garden	13125	1670045.00	39.95	249.95	127.24
+2019-03-22	Buffalo	United States	KeyBank Center	14459	1470630.00	39.95	249.95	101.71
+2019-03-25	Washington DC	United States	Capital One Arena	13598	1832776.00	39.95	249.95	134.78
+2019-03-26	Philadelphia	United States	Wells Fargo Center	14787	1799863.00	39.95	249.95	121.72
+2019-03-28	Cleveland	United States	Rocket Mortgage FieldHouse	14763	1554750.00	39.95	249.95	105.31
+2019-03-30	Uncasville	United States	Mohegan Sun Arena	7097	1112692.00	39.95	249.95	156.78
+2019-04-01	Montreal	Canada	Bell Centre	14620	1440460.00	39.95	249.95	98.53
+2019-04-03	Toronto	Canada	Scotiabank Arena	14663	1565703.00	39.95	249.95	106.78
+2019-04-05	Detroit	United States	Little Caesars Arena	13698	1508715.00	39.95	249.95	110.14

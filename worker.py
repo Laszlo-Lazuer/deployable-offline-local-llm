@@ -11,6 +11,7 @@ from data_normalization import (
     suggest_column_mappings,
     generate_semantic_column_guide
 )
+from file_loader import load_file, get_file_type, SUPPORTED_EXTENSIONS
 
 # The PyPI package is named `open-interpreter`, but it installs a top-level
 # package called `interpreter`. Support both import names for compatibility.
@@ -142,7 +143,11 @@ def run_analysis_task(question, filename):
     
     Instructions:
     1. You can load and work with ANY of the available data files as needed to answer the question
-    2. Use pandas to load CSV files: pd.read_csv('/app/data/filename.csv')
+    2. Use the universal file loader to load ANY supported format:
+       - Import: from file_loader import load_file
+       - Usage: df = load_file('/app/data/filename.ext')
+       - Supported: CSV (.csv), JSON (.json), Excel (.xlsx, .xls), TSV (.tsv), Text (.txt)
+       - This automatically detects the file type and loads it into a pandas DataFrame
     3. If the question requires data from multiple files, load and combine them
     4. Write and execute Python code to answer the question
     5. Show your work and calculations
@@ -156,7 +161,7 @@ def run_analysis_task(question, filename):
     - Don't assume exact column names - check what actually exists
     - Example workflow:
       1. User asks: "What's the average price?"
-      2. Load data: df = pd.read_csv(file)
+      2. Load data: df = load_file('/app/data/sales.csv')
       3. Check columns: print(df.columns.tolist())
       4. Find match: "Avg_Price" matches user's "average price"
       5. Use actual name: df['Avg_Price'].mean()
@@ -174,7 +179,7 @@ def run_analysis_task(question, filename):
       * Align schemas (add missing columns with None)
     - Use the normalization guide above if provided
     - Example workflow:
-      1. Load each file individually
+      1. Load each file individually: df = load_file('/app/data/filename.ext')
       2. Inspect and print schemas
       3. Create normalization mapping
       4. Apply transformations

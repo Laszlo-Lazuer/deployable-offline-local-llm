@@ -2,13 +2,15 @@
 
 A microservices-based data analysis platform that uses Open Interpreter with Ollama LLM to analyze data files via natural language queries. Built with Flask, Celery, and Redis for scalable background task processing.
 
-**Primary Support:** CSV files with full semantic understanding and normalization. Other formats (JSON, Excel, TSV) can be uploaded and analyzed with explicit loading instructions.
+**Multi-Format Support:** Full support for CSV, JSON, Excel, TSV, and TXT files with automatic schema detection, normalization, and natural language understanding.
 
 ## 🌟 Features
 
+- **Universal File Support**: Automatic loading for CSV, JSON, Excel (.xlsx, .xls), TSV, and TXT files
 - **Natural Language Queries**: Ask questions in plain English - no need to know exact column names (e.g., "average price" works even if column is `Avg_Price`)
 - **Multi-File Analysis**: LLM automatically has access to all uploaded data files and can combine them as needed
-- **Intelligent Data Normalization**: LLM inspects and normalizes datasets with different schemas before combining
+- **Mixed Format Analysis**: Combine different file formats in a single query (e.g., CSV + Excel + JSON)
+- **Intelligent Data Normalization**: LLM inspects and normalizes datasets with different schemas before combining (works across all formats)
 - **Live Data Fetching**: LLM can fetch real-time data from APIs and websites (inflation rates, stock prices, weather, etc.)
 - **Cached Inflation Data**: Built-in historical US inflation data (1914-present) scraped and cached locally for accurate price predictions
 - **Automated Code Generation**: LLM writes and executes Python code to analyze data
@@ -27,9 +29,12 @@ A microservices-based data analysis platform that uses Open Interpreter with Oll
 - **Disk**: 10GB for images and models
 - **GPU**: **NOT REQUIRED** - This system runs entirely on CPU
 
-### Data Format Constraints
-- ✅ **CSV files**: Full support (semantic understanding, normalization, natural language)
-- ⚠️ **Other formats** (JSON, Excel, TSV, TXT): Can upload and analyze with explicit loading code
+### Data Format Support
+- ✅ **All formats fully supported**: CSV, JSON, Excel (.xlsx, .xls), TSV, TXT
+- ✅ **Automatic file type detection** with universal loader (`file_loader.py`)
+- ✅ **Schema detection, normalization, and semantic understanding** for all formats
+- ✅ **Natural language queries** work with all formats
+- ✅ **Multi-file analysis** with mixed formats (e.g., CSV + Excel + JSON)
 - 📄 **File size limit**: 100MB maximum per file
 - 📖 See [FILE-FORMAT-SUPPORT.md](FILE-FORMAT-SUPPORT.md) for detailed format information
 
@@ -68,7 +73,7 @@ This script confirms there are no GPU dependencies in the codebase.
                                                   ▼
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
 │    Data     │◀─────│Celery Worker│◀─────│Task Dequeue │
-│  (CSV files)│      │ (worker.py) │      │             │
+│(All Formats)│      │ (worker.py) │      │             │
 └─────────────┘      └──────┬──────┘      └─────────────┘
                             │
                             ▼

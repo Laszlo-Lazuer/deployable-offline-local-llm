@@ -1,0 +1,5 @@
+[
+  {"Date": "2019-01-15", "City": "New York", "Country": "USA", "Venue": "Madison Square Garden", "Attendance": 20000, "Revenue": 2500000, "Min_Price": 100, "Max_Price": 500, "Avg_Price": 125},
+  {"Date": "2019-01-22", "City": "Los Angeles", "Country": "USA", "Venue": "Staples Center", "Attendance": 18500, "Revenue": 2220000, "Min_Price": 90, "Max_Price": 450, "Avg_Price": 120},
+  {"Date": "2019-02-05", "City": "Chicago", "Country": "USA", "Venue": "United Center", "Attendance": 19200, "Revenue": 2400000, "Min_Price": 95, "Max_Price": 475, "Avg_Price": 125}
+]
