@@ -115,19 +115,35 @@ cd local-llm-celery
 # Start in CPU mode (default)
 ./start.sh
 
-# Or start with GPU acceleration (10-50x faster)
-./start.sh gpu
+# Or start with GPU acceleration (10-50x faster on macOS with Metal)
+./start-gpu.sh
 ```
 
 **That's it!** Services will start automatically. Open http://localhost:5001/ to use the web UI.
 
-📘 **GPU acceleration guide**: [GPU.md](GPU.md)
+### Performance Comparison
+
+| Mode | Speed | Use Case |
+|------|-------|----------|
+| **CPU** | ~5 min/query | Production, cloud deployments, CPU-only servers |
+| **GPU (Metal)** | ~30 sec/query | Development, testing, Mac with Apple Silicon |
+
+**Note:** GPU mode uses native Ollama (outside container) for Metal acceleration. This provides 10x faster inference on macOS but is not available in containerized deployments.
+
+📘 **GPU acceleration guides**: 
+- [GPU-MACOS.md](GPU-MACOS.md) - macOS Metal (Apple Silicon)
+- [GPU.md](GPU.md) - NVIDIA GPU (Linux/Cloud)
 
 ---
 
 ### Manual Setup
 
 ### 1. Install Ollama and Configure the Model
+
+**For CPU Mode (containerized):**
+Ollama will run in a container automatically when you use `./start.sh` or `podman-compose up -d`.
+
+**For GPU Mode (macOS Metal - 10x faster):**
 
 ```bash
 # Install Ollama (macOS)
@@ -154,7 +170,10 @@ ollama create llama3:8b -f Modelfile
 curl http://localhost:11434/api/tags
 ```
 
-> **Important**: The 8K context window configuration prevents prompt truncation warnings and allows the LLM to process larger datasets and complex queries. The default 4K context can cause truncation with multi-file analysis.
+> **Important**: 
+> - **GPU Mode** uses native Ollama for Metal acceleration (~30 sec/query)
+> - **CPU Mode** uses containerized Ollama (~5 min/query)
+> - Both modes use the same 8K context configuration for preventing truncation
 
 ### 2. Clone the Repository
 
