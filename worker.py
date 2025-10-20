@@ -6,8 +6,8 @@ from celery import Celery
 from langchain_community.llms import Ollama
 from inflation_cache import get_inflation_data, calculate_cumulative_inflation, get_inflation_summary
 from data_normalization import (
-    generate_normalization_guide, 
-    get_file_schema, 
+    generate_normalization_guide,
+    get_file_schema,
     suggest_column_mappings,
     generate_semantic_column_guide
 )
@@ -44,7 +44,7 @@ def run_analysis_task(self, question, filename):
     """
     data_dir = "/app/data"
     file_path = os.path.join(data_dir, filename)
-    
+
     # Get list of all available data files
     available_files = []
     if os.path.exists(data_dir):
@@ -53,7 +53,7 @@ def run_analysis_task(self, question, filename):
     # Configure Open Interpreter (The Sandbox)
     # The 'ollama' hostname is the name of our Ollama service.
     logger = logging.getLogger(__name__)
-    interpreter.llm.model = "ollama/llama3:8b"
+    interpreter.llm.model = "ollama/llama3:8b"  # Now configured with 8K context
     interpreter.auto_run = True
     interpreter.llm.api_base = "http://ollama:11434"
     # If the default 'ollama' hostname isn't resolvable in this container
@@ -96,12 +96,12 @@ def run_analysis_task(self, question, filename):
     # Set safe_mode to 'off' to allow network requests (for fetching inflation data, APIs, etc.)
     # WARNING: This allows LLM-generated code to make external network requests
     interpreter.safe_mode = "off"
-    
+
     # Increase context window to 8K (llama3 supports up to 8K)
     # This prevents prompt truncation warnings
     interpreter.llm.num_ctx = 8192
     interpreter.llm.api_params = {"num_ctx": 8192}  # Also pass to Ollama API
-    
+
     try:
         interpreter.sandbox.path = sandbox_path  # Isolate file changes
     except AttributeError:
@@ -119,14 +119,14 @@ def run_analysis_task(self, question, filename):
     for f in available_files:
         file_size = os.path.getsize(os.path.join(data_dir, f))
         files_context += f"  - {f} ({file_size:,} bytes)\n"
-    
+
     # Always generate semantic column guide for the primary file (helps with natural language)
     semantic_context = ""
     try:
         semantic_context = "\n" + generate_semantic_column_guide(file_path) + "\n"
     except Exception as e:
         logger.warning("Failed to generate semantic column guide: %s", e)
-    
+
     # Generate full normalization guide if multiple files exist
     normalization_context = ""
     if len(available_files) > 1:
@@ -135,7 +135,7 @@ def run_analysis_task(self, question, filename):
         except Exception as e:
             logger.warning("Failed to generate normalization guide: %s", e)
             normalization_context = ""
-    
+
     full_prompt = f"""
     You are a data analyst with access to multiple data files and the internet.
     
@@ -221,28 +221,28 @@ def run_analysis_task(self, question, filename):
     # Enable streaming to see progress
     # Store task ID for progress updates
     task_id = self.request.id if self.request else None
-    
+
     # Initialize progress tracking
     if task_id:
         redis_client = celery_app.backend.client
         progress_key = f"task_progress:{task_id}"
         redis_client.setex(progress_key, 3600, "Starting analysis...")  # Expires in 1 hour
-    
+
     # The .chat() method triggers the analysis with streaming enabled
     response_stream = interpreter.chat(full_prompt, stream=True)
 
     # Collect the full response while sending progress updates
     full_messages = []
     current_content = ""
-    
+
     for chunk in response_stream:
         full_messages.append(chunk)
-        
+
         # Update progress in Redis for real-time monitoring
         if task_id and chunk.get('type') == 'message':
             content = chunk.get('content', '')
             current_content += content
-            
+
             # Send progress update
             if chunk.get('role') == 'assistant':
                 # Truncate for progress display (show last 200 chars)
@@ -251,7 +251,7 @@ def run_analysis_task(self, question, filename):
             elif chunk.get('format') == 'active_line':
                 # Execution progress
                 redis_client.setex(progress_key, 3600, f"Executing: {content}")
-    
+
     # Extract the final answer from the response
     final_answer = "Could not determine a final answer."
     if full_messages and len(full_messages) > 0:
@@ -260,7 +260,7 @@ def run_analysis_task(self, question, filename):
             if msg.get('type') == 'message' and msg.get('content'):
                 final_answer = msg['content']
                 break
-    
+
     # Clear progress tracking
     if task_id:
         redis_client.delete(progress_key)

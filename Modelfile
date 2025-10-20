@@ -1,0 +1,9 @@
+# Modelfile for llama3:8b with 8K context
+FROM llama3:8b
+
+# Set context window to 8192 tokens
+PARAMETER num_ctx 8192
+
+# Keep other parameters optimized
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
