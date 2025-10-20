@@ -168,6 +168,62 @@
             color: #999;
             font-size: 12px;
         }
+        .mode-selector {
+            display: flex;
+            gap: 20px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        .mode-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .mode-option:hover {
+            background-color: #e9ecef;
+        }
+        .mode-option input[type="radio"] {
+            width: auto;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        .mode-label {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+        .mode-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        .mode-desc {
+            font-size: 11px;
+            color: #666;
+        }
+        .mode-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 6px;
+        }
+        .badge-default {
+            background: #28a745;
+            color: white;
+        }
+        .badge-fast {
+            background: #ff6b6b;
+            color: white;
+        }
         .spinner {
             display: inline-block;
             width: 16px;
@@ -189,6 +245,35 @@
         <p class="subtitle">Ask questions about your data and see real-time progress</p>
 
         <form id="analysisForm">
+            <div class="form-group">
+                <label>Performance Mode</label>
+                <div class="mode-selector">
+                    <div class="mode-option">
+                        <input type="radio" id="modeCPU" name="mode" value="cpu" checked>
+                        <label for="modeCPU" class="mode-label">
+                            <div>
+                                <span class="mode-title">💻 CPU Mode</span>
+                                <span class="mode-badge badge-default">DEFAULT</span>
+                            </div>
+                            <span class="mode-desc">~5 min/query • Works anywhere</span>
+                        </label>
+                    </div>
+                    <div class="mode-option">
+                        <input type="radio" id="modeGPU" name="mode" value="gpu">
+                        <label for="modeGPU" class="mode-label">
+                            <div>
+                                <span class="mode-title">🎮 GPU Mode</span>
+                                <span class="mode-badge badge-fast">10-50X FASTER</span>
+                            </div>
+                            <span class="mode-desc">~1 min/query • Requires NVIDIA GPU</span>
+                        </label>
+                    </div>
+                </div>
+                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                    ℹ️ Mode selection is informational only. Actual performance depends on server configuration.
+                </small>
+            </div>
+
             <div class="form-group">
                 <label>Select Data Files</label>
                 <div id="fileCheckboxes" style="max-height: 200px; overflow-y: auto; border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px;">
@@ -254,6 +339,9 @@
 
             const question = document.getElementById('question').value;
             
+            // Get selected performance mode
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            
             // Get all checked files
             const checkedFiles = Array.from(document.querySelectorAll('input[name="files"]:checked'))
                 .map(checkbox => checkbox.value);
@@ -275,13 +363,14 @@
 
             // Reset UI
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner"></span> Submitting...';
+            const modeLabel = mode === 'gpu' ? '🎮 GPU' : '💻 CPU';
+            submitBtn.innerHTML = `<span class="spinner"></span> Submitting (${modeLabel})...`;
             progressSection.classList.add('active');
-            progressText.textContent = 'Submitting task...';
+            progressText.textContent = `Starting analysis in ${modeLabel} mode...`;
             resultSection.style.display = 'none';
 
             // Build request payload
-            const payload = { question, filename };
+            const payload = { question, filename, mode };
             if (additionalFiles.length > 0) {
                 payload.additional_files = additionalFiles;
             }
@@ -294,7 +383,7 @@
             });
 
             const { task_id } = await response.json();
-            taskIdSpan.textContent = `Task ID: ${task_id}`;
+            taskIdSpan.textContent = `Task ID: ${task_id} | Mode: ${modeLabel}`;
 
             // Stream progress updates
             const eventSource = new EventSource(`/status/${task_id}/stream`);

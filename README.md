@@ -15,10 +15,13 @@ A microservices-based data analysis platform that uses Open Interpreter with Oll
 - **Cached Inflation Data**: Built-in historical US inflation data (1914-present) scraped and cached locally for accurate price predictions
 - **Automated Code Generation**: LLM writes and executes Python code to analyze data
 - **Asynchronous Processing**: Background task queue using Celery and Redis
+- **Real-time Streaming**: Server-Sent Events (SSE) for live progress updates during analysis
 - **Local LLM**: Uses Ollama with llama3:8b for complete privacy
+- **GPU Acceleration**: Optional GPU support for 10-50x faster inference (see [GPU.md](GPU.md))
 - **RESTful API**: Simple HTTP endpoints for integration
+- **Web UI**: Modern interface with real-time progress tracking and multi-file selection
 - **Containerized**: Fully containerized with Podman/Docker support
-- **CPU-Only**: No GPU required - runs on any x86_64 or ARM64 CPU
+- **CPU-Friendly**: Runs on any x86_64 or ARM64 CPU without GPU
 - **Dynamic Data Management**: Upload, update, and delete datasets via API - no redeployment needed
 
 ## ⚙️ System Requirements & Constraints
@@ -99,6 +102,28 @@ This script confirms there are no GPU dependencies in the codebase.
 - **GPU**: None - CPU-only deployment
 
 ## 🚀 Getting Started
+
+### Quick Start (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/Laszlo-Lazuer/local-llm-celery.git
+cd local-llm-celery
+
+# Start in CPU mode (default)
+./start.sh
+
+# Or start with GPU acceleration (10-50x faster)
+./start.sh gpu
+```
+
+**That's it!** Services will start automatically. Open http://localhost:5001/ to use the web UI.
+
+📘 **GPU acceleration guide**: [GPU.md](GPU.md)
+
+---
+
+### Manual Setup
 
 ### 1. Install Ollama and Pull the Model
 
@@ -353,8 +378,58 @@ curl -X POST http://localhost:5001/analyze \
 - The LLM automatically sees all files in `/app/data` directory
 - You can specify a `filename` to set a primary focus file
 - Or omit `filename` to let the LLM work with all available data
-- The LLM can load, join, and analyze multiple files in a single query
-- Perfect for comparing datasets, merging data, or aggregate analysis
+- The LLM intelligently loads and combines data as needed to answer your question
+
+### 🌐 Web Interface
+
+A modern web UI is available at **http://localhost:5001/** with:
+
+**Features:**
+- 📝 **Natural language query input** - Ask questions in plain English
+- 📂 **Multi-file selection** - Choose multiple datasets using checkboxes
+- 🎮 **CPU/GPU mode selector** - Choose performance mode (informational)
+  - 💻 **CPU Mode** (default): ~5 min/query, ~5-10 tokens/sec
+  - 🎮 **GPU Mode**: ~1 min/query, ~50-100 tokens/sec (10-50x faster)
+- 📊 **Real-time streaming** - Watch analysis progress live via Server-Sent Events
+- ✅ **Result display** - View formatted results and generated code
+- 📋 **Task tracking** - See task ID and execution mode
+
+**Using the Web UI:**
+
+1. **Open** http://localhost:5001/ in your browser
+2. **Enter a question** (e.g., "What is the median price?")
+3. **Select performance mode** (CPU or GPU)
+4. **Choose dataset(s)** using checkboxes
+5. **Click Submit** and watch real-time progress
+6. **View results** with generated code and output
+
+**Mode Selector:**
+- The radio button selector shows expected performance for each mode
+- Mode selection is **informational only** - actual performance depends on how you started the service (`./start.sh cpu` or `./start.sh gpu`)
+- See [PERFORMANCE.md](PERFORMANCE.md) for detailed CPU vs GPU comparison
+- See [GPU.md](GPU.md) for GPU setup instructions
+
+**Example Screenshot:**
+```
+┌──────────────────────────────────────────────┐
+│  🤖 LLM Data Analyst                         │
+├──────────────────────────────────────────────┤
+│  Question: What is the median price?         │
+│                                              │
+│  Performance Mode:                           │
+│  ○ 💻 CPU Mode (~5 min/query)    [DEFAULT]  │
+│  ○ 🎮 GPU Mode (~1 min/query)  [10-50X FASTER]│
+│                                              │
+│  Select Datasets:                            │
+│  ☑ sales-data.csv                           │
+│  ☐ q2-sales.csv                             │
+│                                              │
+│  [Submit Query]                              │
+│                                              │
+│  📊 Progress: Generating code... 45%         │
+│  Task ID: abc-123 | Mode: 💻 CPU            │
+└──────────────────────────────────────────────┘
+```
 
 ### Predictive Analysis Examples
 

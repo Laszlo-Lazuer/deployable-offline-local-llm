@@ -34,7 +34,7 @@ services:
       - ollama
     volumes:
       - ./data:/app/data
-    command: celery -A worker.celery_app worker --loglevel=info
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=1
 
 volumes:
   ollama_data:

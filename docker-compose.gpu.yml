@@ -1,0 +1,21 @@
+version: '3.8'
+
+# GPU-accelerated configuration
+# Usage: podman-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+
+services:
+  # Ollama with GPU support
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    devices:
+      - /dev/nvidia0:/dev/nvidia0
+      - /dev/nvidiactl:/dev/nvidiactl
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
