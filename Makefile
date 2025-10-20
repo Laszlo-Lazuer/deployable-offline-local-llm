@@ -62,6 +62,13 @@ test: ## Run a test query
 		-d '{"question": "What is the median Avg_Price?", "filename": "sales-data.csv"}' \
 		| python3 -m json.tool
 
+test-multi: ## Test multi-file analysis
+	@echo "Testing multi-file analysis..."
+	curl -X POST http://localhost:5001/analyze \
+		-H "Content-Type: application/json" \
+		-d '{"question": "Load all CSV files and calculate the total combined revenue from all files."}' \
+		| python3 -m json.tool
+
 rebuild: clean build start ## Clean, rebuild, and restart everything
 
 shell-app: ## Open shell in Flask API container
@@ -69,6 +76,37 @@ shell-app: ## Open shell in Flask API container
 
 shell-worker: ## Open shell in Worker container
 	podman exec -it $(WORKER_CONTAINER) /bin/bash
+
+# Data management targets
+data-list: ## List all data files
+	@echo "Listing data files..."
+	curl -s http://localhost:5001/data | python3 -m json.tool
+
+data-upload: ## Upload a data file (usage: make data-upload FILE=/path/to/file.csv)
+	@if [ -z "$(FILE)" ]; then \
+		echo "Error: FILE parameter required"; \
+		echo "Usage: make data-upload FILE=/path/to/your/file.csv"; \
+		exit 1; \
+	fi
+	@echo "Uploading $(FILE)..."
+	curl -X POST http://localhost:5001/data -F "file=@$(FILE)" | python3 -m json.tool
+
+data-delete: ## Delete a data file (usage: make data-delete NAME=filename.csv)
+	@if [ -z "$(NAME)" ]; then \
+		echo "Error: NAME parameter required"; \
+		echo "Usage: make data-delete NAME=filename.csv"; \
+		exit 1; \
+	fi
+	@echo "Deleting $(NAME)..."
+	curl -X DELETE http://localhost:5001/data/$(NAME) | python3 -m json.tool
+
+data-info: ## Get file info (usage: make data-info NAME=filename.csv)
+	@if [ -z "$(NAME)" ]; then \
+		echo "Error: NAME parameter required"; \
+		echo "Usage: make data-info NAME=filename.csv"; \
+		exit 1; \
+	fi
+	curl -s http://localhost:5001/data/$(NAME)/info | python3 -m json.tool
 
 # Kubernetes targets
 k8s-deploy: ## Deploy to Kubernetes

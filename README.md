@@ -1,16 +1,23 @@
 # Local LLM Celery - AI-Powered Data Analysis Service
 
-A microservices-based data analysis platform that uses Open Interpreter with Ollama LLM to analyze CSV files via natural language queries. Built with Flask, Celery, and Redis for scalable background task processing.
+A microservices-based data analysis platform that uses Open Interpreter with Ollama LLM to analyze data files via natural language queries. Built with Flask, Celery, and Redis for scalable background task processing.
+
+**Primary Support:** CSV files with full semantic understanding and normalization. Other formats (JSON, Excel, TSV) can be uploaded and analyzed with explicit loading instructions.
 
 ## 🌟 Features
 
-- **Natural Language Queries**: Ask questions about your data in plain English
+- **Natural Language Queries**: Ask questions in plain English - no need to know exact column names (e.g., "average price" works even if column is `Avg_Price`)
+- **Multi-File Analysis**: LLM automatically has access to all uploaded data files and can combine them as needed
+- **Intelligent Data Normalization**: LLM inspects and normalizes datasets with different schemas before combining
+- **Live Data Fetching**: LLM can fetch real-time data from APIs and websites (inflation rates, stock prices, weather, etc.)
+- **Cached Inflation Data**: Built-in historical US inflation data (1914-present) scraped and cached locally for accurate price predictions
 - **Automated Code Generation**: LLM writes and executes Python code to analyze data
 - **Asynchronous Processing**: Background task queue using Celery and Redis
 - **Local LLM**: Uses Ollama with llama3:8b for complete privacy
 - **RESTful API**: Simple HTTP endpoints for integration
 - **Containerized**: Fully containerized with Podman/Docker support
 - **CPU-Only**: No GPU required - runs on any x86_64 or ARM64 CPU
+- **Dynamic Data Management**: Upload, update, and delete datasets via API - no redeployment needed
 
 ## ⚙️ System Requirements & Constraints
 
@@ -19,6 +26,12 @@ A microservices-based data analysis platform that uses Open Interpreter with Oll
 - **RAM**: 8GB minimum, 16GB recommended
 - **Disk**: 10GB for images and models
 - **GPU**: **NOT REQUIRED** - This system runs entirely on CPU
+
+### Data Format Constraints
+- ✅ **CSV files**: Full support (semantic understanding, normalization, natural language)
+- ⚠️ **Other formats** (JSON, Excel, TSV, TXT): Can upload and analyze with explicit loading code
+- 📄 **File size limit**: 100MB maximum per file
+- 📖 See [FILE-FORMAT-SUPPORT.md](FILE-FORMAT-SUPPORT.md) for detailed format information
 
 ### Important Constraints
 - ✅ **100% CPU-based inference** - No GPU dependencies
@@ -166,6 +179,53 @@ podman logs llm-worker --tail 20
 
 ## 📖 Usage
 
+### Managing Data Files
+
+**No redeployment needed!** Upload, update, and delete data files via API.
+
+#### Upload a New Dataset
+
+```bash
+curl -X POST http://localhost:5001/data \
+  -F "file=@/path/to/your/data.csv"
+```
+
+#### List All Data Files
+
+```bash
+curl http://localhost:5001/data
+```
+
+**Response:**
+```json
+{
+  "files": [
+    {
+      "filename": "sales-data.csv",
+      "size_bytes": 2048,
+      "size_human": "2.00 KB",
+      "modified": 1698624000.0
+    }
+  ],
+  "count": 1
+}
+```
+
+#### Update an Existing File
+
+```bash
+curl -X PUT http://localhost:5001/data/sales-data.csv \
+  -F "file=@/path/to/updated-data.csv"
+```
+
+#### Delete a File
+
+```bash
+curl -X DELETE http://localhost:5001/data/old-data.csv
+```
+
+> 📘 **Complete Data Management API**: See [DATA-API.md](DATA-API.md) for full documentation including download, file info, Python client examples, and more.
+
 ### Sample Data
 
 The project includes sample concert tour data in `data/sales-data.csv`:
@@ -180,6 +240,7 @@ Date,City,Country,Venue,Attendance,Revenue,Min_Price,Max_Price,Avg_Price
 
 #### 1. Submit an Analysis Task
 
+**Single File Analysis:**
 ```bash
 curl -X POST http://localhost:5001/analyze \
   -H "Content-Type: application/json" \
@@ -188,6 +249,18 @@ curl -X POST http://localhost:5001/analyze \
     "filename": "sales-data.csv"
   }'
 ```
+
+**Multi-File Analysis (automatic):**
+```bash
+# The LLM has access to ALL uploaded files and can use multiple files as needed
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Compare total revenue between sales-data.csv and q2-sales.csv"
+  }'
+```
+
+> **Note**: When you upload multiple data files, the LLM automatically knows about all of them and can load/combine any files needed to answer your question. You can specify a primary file with `"filename"`, or omit it to let the LLM work with all available data.
 
 **Response:**
 ```json
@@ -216,7 +289,7 @@ curl http://localhost:5001/status/73208592-a4c1-4d56-819f-9eaba5623ffc
 Try these example questions:
 
 ```bash
-# Statistical analysis
+# Statistical analysis - single file
 curl -X POST http://localhost:5001/analyze \
   -H "Content-Type: application/json" \
   -d '{"question": "What is the total Revenue across all events?", "filename": "sales-data.csv"}'
@@ -225,6 +298,16 @@ curl -X POST http://localhost:5001/analyze \
 curl -X POST http://localhost:5001/analyze \
   -H "Content-Type: application/json" \
   -d '{"question": "Which city had the highest attendance?", "filename": "sales-data.csv"}'
+
+# Multi-file analysis - LLM can access all available data files
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is the combined revenue from all uploaded CSV files?"}'
+
+# Cross-file comparison
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Compare average prices between sales-data.csv and q2-data.csv"}'
 
 # Date-based queries
 curl -X POST http://localhost:5001/analyze \
@@ -236,6 +319,78 @@ curl -X POST http://localhost:5001/analyze \
   -H "Content-Type: application/json" \
   -d '{"question": "What is the correlation between Attendance and Revenue?", "filename": "sales-data.csv"}'
 ```
+
+**How Multi-File Support Works:**
+- The LLM automatically sees all files in `/app/data` directory
+- You can specify a `filename` to set a primary focus file
+- Or omit `filename` to let the LLM work with all available data
+- The LLM can load, join, and analyze multiple files in a single query
+- Perfect for comparing datasets, merging data, or aggregate analysis
+
+### Predictive Analysis Examples
+
+#### Inflation-Adjusted Pricing (Using Assumptions)
+
+For quick analysis with assumed inflation rates:
+
+```bash
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "If the artist tours Chicago in 2026, what would the expected ticket price be? Calculate the average historical price for Chicago, then adjust for inflation from 2019 to 2026 using 3% annual inflation. Show your calculation steps.",
+    "filename": "sales-data.csv"
+  }'
+```
+
+**Expected Output:**
+```json
+{
+  "task_id": "...",
+  "status": "SUCCESS",
+  "result": "The average ticket price for Chicago events is approximately $119.85 and the expected ticket price in 2026 after applying a 3% annual inflation rate for 7 years is approximately $147.40."
+}
+```
+
+**Calculation Details:**
+- Historical Average (Chicago): $119.85
+- Inflation Factor: (1.03)^7 = 1.2299
+- 2026 Expected Price: $119.85 × 1.2299 = **$147.40**
+
+#### Live Data Fetching (Using Real APIs)
+
+⚠️ **Note**: Network access is enabled but APIs may require keys or have rate limits.
+
+For analysis with real-time data from external sources:
+
+```bash
+# Attempt to fetch real inflation data (may require valid API key)
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Fetch current US inflation rates from a public source, then use the actual cumulative inflation from 2019-2025 to calculate Chicago 2026 ticket prices. Show the real data you fetched.",
+    "filename": "sales-data.csv"
+  }'
+```
+
+**Example with specific API:**
+```bash
+# Using a known working endpoint
+curl -X POST http://localhost:5001/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Make a GET request to https://api.github.com/repos/python/cpython and show how many stars the Python repository has",
+    "filename": "sales-data.csv"
+  }'
+```
+
+**Key Differences:**
+- **With Assumptions**: Fast, predictable, uses specified rates (e.g., "3% inflation")
+- **With Live Data**: Slower, requires working API endpoint, uses real current data
+- **When to use each**:
+  - Use assumptions for quick estimates, testing, or when exact data isn't critical
+  - Use live data for production analysis, compliance, or when accuracy is essential
+
+See [NETWORK-ACCESS.md](NETWORK-ACCESS.md) for detailed information on fetching live data.
 
 ## 🐍 Embedding in Python Applications
 
@@ -868,6 +1023,36 @@ celery -A worker.celery_app worker --loglevel=info
 **Issue**: Build fails with exit code 137 (OOM)
 - **Solution**: Increase Docker/Podman memory limit to 8GB+
 - The build process installs 100+ dependencies including large ML libraries
+
+**Issue**: Multi-file analysis only uses one file
+- **Solution**: Be explicit in your question about which files to use
+- See [Multi-File Analysis Guide](MULTI-FILE-ANALYSIS.md) for examples
+
+## 📚 Additional Documentation
+
+- **[Query Examples & Use Cases](EXAMPLES.md)** - Comprehensive query examples with expected outputs
+- **[File Format Support](FILE-FORMAT-SUPPORT.md)** - Supported file formats, limitations, and workarounds
+- **[Data Normalization](DATA-NORMALIZATION.md)** - How the LLM handles datasets with different schemas intelligently
+- **[Inflation Data Cache](INFLATION-CACHE.md)** - Historical US inflation data (1914-present) for accurate price predictions
+- **[Adaptive API Parsing](ADAPTIVE-API-PARSING.md)** - How the LLM handles unknown API structures intelligently
+- **[Network Access & Live Data](NETWORK-ACCESS.md)** - Fetch real-time data from APIs and websites
+- **[Multi-File Analysis](MULTI-FILE-ANALYSIS.md)** - Complete guide to analyzing multiple datasets simultaneously
+- **[Data Management API](DATA-API.md)** - Upload, update, and delete data files via REST API
+- **[Ollama Deployment Options](OLLAMA-DEPLOYMENT.md)** - Three deployment strategies for Ollama in Kubernetes
+- **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
+- **[Kubernetes Deployment](k8s/README.md)** - Production deployment guide
+
+## 🤝 Contributing
+
+Contributions welcome! This is a reference implementation for:
+- Local LLM integration patterns
+- Celery task queue architecture
+- CPU-only ML deployment strategies
+- Multi-file data analysis workflows
+
+## 📄 License
+
+MIT License - Feel free to use this project as a template for your own AI-powered data analysis services.
 
 **Issue**: Task returns NaN or errors
 - **Solution**: Ensure CSV has clean numeric data without special characters ($, commas, etc.)

@@ -19,3 +19,6 @@ RUN python -m pip install --upgrade pip setuptools wheel \
 
 # Copy the rest of the application's code into the container
 COPY . .
+
+# Create cache directories for inflation data and schema mappings
+RUN mkdir -p /app/cache /app/cache/schemas && chmod -R 777 /app/cache

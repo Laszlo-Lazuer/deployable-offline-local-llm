@@ -8,3 +8,7 @@ ollama
 pandas
 # Pin fastuuid to avoid Rust compilation OOM
 fastuuid==0.13.3
+# For fetching live data from APIs
+requests
+beautifulsoup4
+lxml
