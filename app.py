@@ -8,10 +8,13 @@ warnings.filterwarnings(
 )
 
 import os
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Response, stream_with_context
 from werkzeug.utils import secure_filename
 from worker import run_analysis_task
 from celery.result import AsyncResult
+import redis
+import time
+import json
 
 app = Flask(__name__)
 
@@ -19,6 +22,10 @@ app = Flask(__name__)
 DATA_DIR = os.environ.get('DATA_DIR', '/app/data')
 ALLOWED_EXTENSIONS = {'csv', 'json', 'txt', 'xlsx', 'tsv'}
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+
+# Redis client for progress tracking
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/0')
+redis_client = redis.from_url(REDIS_URL)
 
 def allowed_file(filename):
     """Check if file extension is allowed."""
@@ -46,6 +53,11 @@ def format_bytes(bytes_num):
             return f"{bytes_num:.2f} {unit}"
         bytes_num /= 1024.0
     return f"{bytes_num:.2f} TB"
+
+@app.route('/')
+def index():
+    """Serve the web UI"""
+    return send_file('static/index.html')
 
 @app.route('/analyze', methods=['POST'])
 def start_analysis():
@@ -99,6 +111,68 @@ def get_status(task_id):
         response['error'] = str(task_result.info) # Get traceback
 
     return jsonify(response)
+
+@app.route('/status/<task_id>/stream', methods=['GET'])
+def stream_progress(task_id):
+    """
+    Server-Sent Events endpoint to stream real-time progress updates.
+    Usage: Connect with EventSource in JavaScript or curl with text/event-stream
+    
+    Example:
+        curl -N http://localhost:5001/status/{task_id}/stream
+    """
+    def generate():
+        """Generator function that yields SSE-formatted progress updates."""
+        task_result = AsyncResult(task_id, app=run_analysis_task.app)
+        progress_key = f"task_progress:{task_id}"
+        last_message = None
+        
+        while True:
+            # Check task status
+            state = task_result.state
+            
+            # Get progress message from Redis
+            progress_msg = redis_client.get(progress_key)
+            if progress_msg:
+                progress_msg = progress_msg.decode('utf-8')
+                
+                # Only send if message changed
+                if progress_msg != last_message:
+                    last_message = progress_msg
+                    data = {
+                        "status": state,
+                        "progress": progress_msg,
+                        "timestamp": time.time()
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
+            
+            # Check if task completed
+            if state in ['SUCCESS', 'FAILURE']:
+                final_data = {
+                    "status": state,
+                    "progress": "Complete" if state == 'SUCCESS' else "Failed",
+                    "timestamp": time.time()
+                }
+                
+                if state == 'SUCCESS':
+                    final_data['result'] = task_result.get()
+                elif state == 'FAILURE':
+                    final_data['error'] = str(task_result.info)
+                
+                yield f"data: {json.dumps(final_data)}\n\n"
+                break
+            
+            # Wait before checking again
+            time.sleep(0.5)
+    
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no'
+        }
+    )
 
 @app.route('/status/health', methods=['GET'])
 def health_check():

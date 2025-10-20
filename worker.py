@@ -37,8 +37,8 @@ REDIS_URL = "redis://redis:6379/0"
 celery_app = Celery("tasks", broker=REDIS_URL, backend=REDIS_URL)
 
 # --- The Analysis Task ---
-@celery_app.task
-def run_analysis_task(question, filename):
+@celery_app.task(bind=True)
+def run_analysis_task(self, question, filename):
     """
     This is the core task. It runs in the background on a worker process.
     """
@@ -96,6 +96,11 @@ def run_analysis_task(question, filename):
     # Set safe_mode to 'off' to allow network requests (for fetching inflation data, APIs, etc.)
     # WARNING: This allows LLM-generated code to make external network requests
     interpreter.safe_mode = "off"
+    
+    # Increase context window to 8K (llama3 supports up to 8K)
+    # This prevents prompt truncation warnings
+    interpreter.llm.num_ctx = 8192
+    interpreter.llm.api_params = {"num_ctx": 8192}  # Also pass to Ollama API
     
     try:
         interpreter.sandbox.path = sandbox_path  # Isolate file changes
@@ -213,12 +218,51 @@ def run_analysis_task(question, filename):
     Execute the code now.
     """
 
-    # The .chat() method triggers the analysis
-    response_stream = interpreter.chat(full_prompt, stream=False)
+    # Enable streaming to see progress
+    # Store task ID for progress updates
+    task_id = self.request.id if self.request else None
+    
+    # Initialize progress tracking
+    if task_id:
+        redis_client = celery_app.backend.client
+        progress_key = f"task_progress:{task_id}"
+        redis_client.setex(progress_key, 3600, "Starting analysis...")  # Expires in 1 hour
+    
+    # The .chat() method triggers the analysis with streaming enabled
+    response_stream = interpreter.chat(full_prompt, stream=True)
 
+    # Collect the full response while sending progress updates
+    full_messages = []
+    current_content = ""
+    
+    for chunk in response_stream:
+        full_messages.append(chunk)
+        
+        # Update progress in Redis for real-time monitoring
+        if task_id and chunk.get('type') == 'message':
+            content = chunk.get('content', '')
+            current_content += content
+            
+            # Send progress update
+            if chunk.get('role') == 'assistant':
+                # Truncate for progress display (show last 200 chars)
+                preview = current_content[-200:] if len(current_content) > 200 else current_content
+                redis_client.setex(progress_key, 3600, f"Generating code... {preview}")
+            elif chunk.get('format') == 'active_line':
+                # Execution progress
+                redis_client.setex(progress_key, 3600, f"Executing: {content}")
+    
     # Extract the final answer from the response
     final_answer = "Could not determine a final answer."
-    if response_stream and len(response_stream) > 0:
-        final_answer = response_stream[-1]['content']
+    if full_messages and len(full_messages) > 0:
+        # Get the last message content
+        for msg in reversed(full_messages):
+            if msg.get('type') == 'message' and msg.get('content'):
+                final_answer = msg['content']
+                break
+    
+    # Clear progress tracking
+    if task_id:
+        redis_client.delete(progress_key)
 
     return final_answer

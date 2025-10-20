@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Data Analyst - Real-time Progress</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #555;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .progress-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .progress-section.active {
+            display: block;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .status-pending { background: #ffc107; color: #000; }
+        .status-success { background: #28a745; color: white; }
+        .status-failure { background: #dc3545; color: white; }
+        .progress-text {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .result-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #28a745;
+        }
+        .result-title {
+            font-weight: 600;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .result-content {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .file-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .file-checkbox:hover {
+            background-color: #f0f0f0;
+        }
+        .file-checkbox input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .file-checkbox label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-name {
+            font-weight: 500;
+            color: #333;
+        }
+        .file-size {
+            color: #999;
+            font-size: 12px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 LLM Data Analyst</h1>
+        <p class="subtitle">Ask questions about your data and see real-time progress</p>
+
+        <form id="analysisForm">
+            <div class="form-group">
+                <label>Select Data Files</label>
+                <div id="fileCheckboxes" style="max-height: 200px; overflow-y: auto; border: 2px solid #e0e0e0; border-radius: 8px; padding: 12px;">
+                    <div style="color: #999;">Loading files...</div>
+                </div>
+                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                    Select one or more files to analyze
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="question">Your Question</label>
+                <textarea id="question" placeholder="e.g., Compare total revenue between sales-data.csv and concert-sales.csv" required></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                Analyze Data
+            </button>
+        </form>
+
+        <div id="progressSection" class="progress-section">
+            <div>
+                <span id="statusBadge" class="status-badge status-pending">PENDING</span>
+                <span id="taskId" style="color: #666; font-size: 12px;"></span>
+            </div>
+            
+            <div class="progress-text" id="progressText">
+                Waiting for updates...
+            </div>
+
+            <div id="resultSection" class="result-section" style="display: none;">
+                <div class="result-title">✅ Result:</div>
+                <div id="resultContent" class="result-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load available files
+        fetch('/data')
+            .then(r => r.json())
+            .then(data => {
+                const checkboxContainer = document.getElementById('fileCheckboxes');
+                
+                if (data.files.length > 0) {
+                    checkboxContainer.innerHTML = data.files.map((f, index) => `
+                        <div class="file-checkbox">
+                            <input type="checkbox" id="file_${index}" name="files" value="${f.filename}" ${index === 0 ? 'checked' : ''}>
+                            <label for="file_${index}">
+                                <span class="file-name">${f.filename}</span>
+                                <span class="file-size">${f.size_human}</span>
+                            </label>
+                        </div>
+                    `).join('');
+                } else {
+                    checkboxContainer.innerHTML = '<div style="color: #999;">No files available</div>';
+                }
+            });
+
+        // Handle form submission
+        document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const question = document.getElementById('question').value;
+            
+            // Get all checked files
+            const checkedFiles = Array.from(document.querySelectorAll('input[name="files"]:checked'))
+                .map(checkbox => checkbox.value);
+            
+            if (checkedFiles.length === 0) {
+                alert('Please select at least one file');
+                return;
+            }
+
+            const filename = checkedFiles[0]; // Primary file
+            const additionalFiles = checkedFiles.slice(1); // Additional files
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const progressSection = document.getElementById('progressSection');
+            const progressText = document.getElementById('progressText');
+            const statusBadge = document.getElementById('statusBadge');
+            const taskIdSpan = document.getElementById('taskId');
+            const resultSection = document.getElementById('resultSection');
+
+            // Reset UI
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Submitting...';
+            progressSection.classList.add('active');
+            progressText.textContent = 'Submitting task...';
+            resultSection.style.display = 'none';
+
+            // Build request payload
+            const payload = { question, filename };
+            if (additionalFiles.length > 0) {
+                payload.additional_files = additionalFiles;
+            }
+
+            // Submit task
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const { task_id } = await response.json();
+            taskIdSpan.textContent = `Task ID: ${task_id}`;
+
+            // Stream progress updates
+            const eventSource = new EventSource(`/status/${task_id}/stream`);
+
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                // Update status badge
+                statusBadge.className = `status-badge status-${data.status.toLowerCase()}`;
+                statusBadge.textContent = data.status;
+
+                // Update progress text
+                progressText.textContent = data.progress || 'Processing...';
+                progressText.scrollTop = progressText.scrollHeight;
+
+                // Handle completion
+                if (data.status === 'SUCCESS') {
+                    document.getElementById('resultContent').textContent = data.result;
+                    resultSection.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Analyze Data';
+                    eventSource.close();
+                } else if (data.status === 'FAILURE') {
+                    progressText.textContent = `Error: ${data.error}`;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Analyze Data';
+                    eventSource.close();
+                }
+            };
+
+            eventSource.onerror = () => {
+                progressText.textContent = 'Connection error. Retrying...';
+            };
+        });
+    </script>
+</body>
+</html>
