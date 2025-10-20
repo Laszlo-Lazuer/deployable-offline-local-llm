@@ -1,21 +1,40 @@
 version: '3.8'
 
-# GPU-accelerated configuration
-# Usage: podman-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+# GPU-accelerated configuration for macOS Metal
+# NOTE: Containers cannot access Metal GPU on macOS
+# Solution: Use native Ollama (installed via brew) with GPU support
+# Usage: ./start-gpu.sh
 
 services:
-  # Ollama with GPU support
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
+  # The Redis message queue
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+
+  # NOTE: Ollama service removed - using host Ollama with Metal GPU
+  # Start native Ollama with: ollama serve
+  # This provides 10-50x faster inference via Metal GPU
+
+  # The Flask web app (cashier)
+  web-app:
+    build: .
+    container_name: web-app
     ports:
-      - "11434:11434"
+      - "5001:5000"
+    depends_on:
+      - redis
+    command: flask --app app run --host=0.0.0.0
+
+  # The Celery worker (barista)
+  # Connects to host Ollama for Metal GPU acceleration
+  worker:
+    build: .
+    container_name: worker
+    depends_on:
+      - redis
     volumes:
-      - ollama_data:/root/.ollama
-    devices:
-      - /dev/nvidia0:/dev/nvidia0
-      - /dev/nvidiactl:/dev/nvidiactl
-      - /dev/nvidia-uvm:/dev/nvidia-uvm
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - ./data:/app/data
+    # Allow access to host's Ollama service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: celery -A worker.celery_app worker --loglevel=info --concurrency=1

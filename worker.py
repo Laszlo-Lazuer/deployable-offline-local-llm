@@ -236,27 +236,28 @@ def run_analysis_task(self, question, filename):
 
     # Collect the full response while sending progress updates
     full_messages = []
-    all_content = []  # Collect all message content regardless of role
+    all_content = []  # Collect ALL text content from all chunks
 
     for chunk in response_stream:
         full_messages.append(chunk)
 
+        # Extract content from ANY chunk type
+        content = chunk.get('content', '')
+        chunk_type = chunk.get('type', '')
+        role = chunk.get('role', '')
+        
+        # Accumulate ALL non-empty content
+        if content and isinstance(content, str):
+            all_content.append(content)
+        
         # Update progress in Redis for real-time monitoring
-        if task_id and chunk.get('type') == 'message':
-            content = chunk.get('content', '')
-            role = chunk.get('role', '')
-            
-            # Accumulate ALL message content (assistant, system, etc.)
-            if content:
-                all_content.append(content)
-                
-            # Send progress updates
-            if role == 'assistant':
+        if task_id:
+            if chunk_type == 'message' and role == 'assistant' and content:
                 # Truncate for progress display (show last 200 chars)
                 full_text = ''.join(all_content)
                 preview = full_text[-200:] if len(full_text) > 200 else full_text
-                redis_client.setex(progress_key, 3600, f"Generating code... {preview}")
-            elif chunk.get('format') == 'active_line':
+                redis_client.setex(progress_key, 3600, f"Generating: {preview}")
+            elif chunk.get('format') == 'active_line' and content:
                 # Execution progress
                 redis_client.setex(progress_key, 3600, f"Executing: {content}")
 
