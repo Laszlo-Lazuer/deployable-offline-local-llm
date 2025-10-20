@@ -1016,7 +1016,7 @@ celery -A worker.celery_app worker --loglevel=info
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Quick Fixes
 
 **Issue**: `ModuleNotFoundError: No module named 'interpreter'`
 - **Solution**: Rebuild image - the package name is `open-interpreter` but imports as `interpreter`
@@ -1026,12 +1026,30 @@ celery -A worker.celery_app worker --loglevel=info
 - Check: `curl http://localhost:11434/api/tags`
 
 **Issue**: Build fails with exit code 137 (OOM)
-- **Solution**: Increase Docker/Podman memory limit to 8GB+
-- The build process installs 100+ dependencies including large ML libraries
+- **Solution**: Increase Podman memory to 8GB+ (see [FIX-MEMORY-ISSUE.md](FIX-MEMORY-ISSUE.md))
+- **Quick fix**: `podman machine rm && podman machine init --memory 8192 --cpus 4`
+
+**Issue**: Container build uses cached layers (changes not applied)
+- **Solution**: Force clean build: `podman build --no-cache -t local-llm-celery:dev --format docker .`
+
+**Issue**: Task returns `NameError: name 'load_file' is not defined`
+- **Solution**: Rebuild with updated prompt or be more explicit in question
+- Ask: "Import load_file from file_loader, then load the TSV file..."
 
 **Issue**: Multi-file analysis only uses one file
 - **Solution**: Be explicit in your question about which files to use
 - See [Multi-File Analysis Guide](MULTI-FILE-ANALYSIS.md) for examples
+
+### Comprehensive Troubleshooting
+
+For detailed troubleshooting with diagnostic scripts and step-by-step solutions:
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Complete troubleshooting guide
+  - Build issues (exit 137, I/O errors, cache issues)
+  - Memory issues (OOM, model loading failures)
+  - Container issues (won't start, port conflicts, networking)
+  - LLM issues (model not found, code generation errors)
+  - File loading issues (format errors, missing files)
+  - Diagnostic commands and health check scripts
 
 ## 📚 Additional Documentation
 

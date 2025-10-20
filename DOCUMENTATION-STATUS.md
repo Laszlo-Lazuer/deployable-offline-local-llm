@@ -181,7 +181,23 @@ This document provides a comprehensive status of all project documentation follo
   - Exit 137 troubleshooting
 - **Coverage**: Comprehensive
 
-#### 17. **TEST-MULTI-FORMAT.md**
+#### 17. **TROUBLESHOOTING.md**
+- **Status**: ✅ NEW - COMPLETE
+- **Created**: December 2024
+- **Content**:
+  - Comprehensive troubleshooting guide (30+ KB)
+  - Build issues (exit 137, I/O errors, cache problems)
+  - Memory issues (OOM, model loading failures)
+  - Container issues (startup, ports, networking)
+  - LLM/Model issues (not found, code generation errors)
+  - Network issues (API access, external data fetching)
+  - File loading issues (unsupported formats, missing files)
+  - Task execution issues (PENDING forever, Python errors)
+  - Diagnostic commands (health check, memory, build, network scripts)
+  - Preventive maintenance checklist
+- **Coverage**: Comprehensive (based on real debugging sessions)
+
+#### 18. **TEST-MULTI-FORMAT.md**
 - **Status**: ✅ CURRENT
 - **Created**: Multi-format implementation
 - **Content**:
@@ -197,19 +213,29 @@ This document provides a comprehensive status of all project documentation follo
 
 ### Test Scripts
 
-#### 18. **test-multi-format.sh**
+#### 19. **test-multi-format.sh**
 - **Status**: ✅ CURRENT
 - **Created**: Multi-format implementation
 - **Executable**: Yes (chmod +x)
 - **Content**: Automated test script for all 5 formats
 - **Coverage**: Complete
 
-#### 19. **fix-memory.sh**
+#### 20. **fix-memory.sh**
 - **Status**: ✅ CURRENT
 - **Created**: During infrastructure upgrade
 - **Executable**: Yes (chmod +x)
 - **Content**: Memory diagnosis and fix script
 - **Coverage**: Complete
+
+#### 21. **Diagnostic Scripts** (in TROUBLESHOOTING.md)
+- **Status**: ✅ NEW
+- **Created**: December 2024
+- **Scripts included**:
+  - `health-check.sh` - All-in-one system health verification
+  - `check-memory.sh` - Memory allocation at all levels
+  - `check-build.sh` - Pre-build environment validation
+  - `check-network.sh` - Network connectivity diagnosis
+- **Coverage**: Complete (copy-paste ready from docs)
 
 ### Test Data Files
 
@@ -273,7 +299,7 @@ All test data files in `/app/data`:
 3. ✅ Updated `worker.py` - LLM prompt instructs use of universal loader
 4. ✅ Updated `requirements.txt` - Added openpyxl, xlrd for Excel support
 
-**Documentation Changes:**
+**Documentation changes:**
 1. ✅ Created TECH-STACK.md - Complete dependency documentation
 2. ✅ Updated README.md - Multi-format support highlighted, 8GB RAM requirement
 3. ✅ Updated QUICKSTART.md - Memory check and machine recreation steps
@@ -285,6 +311,10 @@ All test data files in `/app/data`:
 9. ✅ Created CHANGELOG-MULTI-FORMAT.md - Detailed changes
 10. ✅ Created TEST-MULTI-FORMAT.md - Test scenarios
 11. ✅ Created FIX-MEMORY-ISSUE.md - Infrastructure troubleshooting
+12. ✅ Created HOW-IT-WORKS.md - Automatic vs manual operations explained
+13. ✅ Created TROUBLESHOOTING.md - **NEW** Comprehensive troubleshooting guide (30+ KB)
+14. ✅ Updated README troubleshooting section - References new guide
+15. ✅ Created DOCUMENTATION-STATUS.md - This document
 
 **Infrastructure Changes:**
 1. ✅ Podman machine upgraded from 2GB → 8GB RAM
