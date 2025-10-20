@@ -184,6 +184,30 @@ podman logs llm-worker --tail 20
 
 ## 📖 Usage
 
+### 🧪 Testing with Postman
+
+A complete Postman collection is available with 20+ example requests covering all API endpoints:
+
+**Import the collection:**
+```bash
+# In Postman: Import → File → Select postman_collection.json
+```
+
+**Or import from URL:**
+```
+https://raw.githubusercontent.com/Laszlo-Lazuer/local-llm-celery/main/postman_collection.json
+```
+
+**Collection includes:**
+- ✅ Health & Status checks
+- ✅ File management (upload, list, delete)
+- ✅ Single file analysis (7 examples)
+- ✅ Multi-file analysis (5 examples)
+- ✅ Advanced queries (4 examples)
+- ✅ Real-time streaming (SSE)
+
+📘 **See [POSTMAN.md](POSTMAN.md) for detailed guide**
+
 ### Managing Data Files
 
 **No redeployment needed!** Upload, update, and delete data files via API.

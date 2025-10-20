@@ -1,0 +1,748 @@
+{
+	"info": {
+		"_postman_id": "llm-celery-data-analyst",
+		"name": "LLM Data Analyst API",
+		"description": "API collection for the Local LLM Data Analyst with Celery task queue. This API uses Open Interpreter with Ollama (llama3:8b) to analyze CSV, TSV, JSON, and other data files using natural language queries.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "local-llm-celery"
+	},
+	"item": [
+		{
+			"name": "Health & Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/status/health",
+							"host": ["{{base_url}}"],
+							"path": ["status", "health"]
+						},
+						"description": "Check if the API service is healthy and running"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Task Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/status/{{task_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["status", "{{task_id}}"]
+						},
+						"description": "Get the status of a submitted analysis task. Returns PENDING, SUCCESS, or FAILURE along with the result."
+					},
+					"response": []
+				},
+				{
+					"name": "Stream Task Progress (SSE)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/status/{{task_id}}/stream",
+							"host": ["{{base_url}}"],
+							"path": ["status", "{{task_id}}", "stream"]
+						},
+						"description": "Server-Sent Events (SSE) endpoint that streams real-time progress updates for a task. Shows code generation, execution, and final results in real-time."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for checking service health and task status"
+		},
+		{
+			"name": "File Management",
+			"item": [
+				{
+					"name": "List Available Files",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/data",
+							"host": ["{{base_url}}"],
+							"path": ["data"]
+						},
+						"description": "List all available data files in the /data directory with metadata (filename, size, timestamps)"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload File",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/path/to/your/file.csv",
+									"description": "File to upload (CSV, TSV, JSON, TXT, XLSX)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/upload",
+							"host": ["{{base_url}}"],
+							"path": ["upload"]
+						},
+						"description": "Upload a new data file to the /data directory. Supports CSV, TSV, JSON, TXT, and XLSX files up to 100MB."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing data files"
+		},
+		{
+			"name": "Data Analysis - Single File",
+			"item": [
+				{
+					"name": "Simple Query - Median Price",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save task_id for status check",
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"    console.log('Task ID:', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What is the median Avg_Price?\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Calculate the median of the Avg_Price column in sales-data.csv"
+					},
+					"response": []
+				},
+				{
+					"name": "Aggregation - Total Revenue",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What is the total revenue?\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Calculate total revenue from all concerts in the dataset"
+					},
+					"response": []
+				},
+				{
+					"name": "Grouping - Sales by Country",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What are the total sales by country?\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Group concerts by country and sum revenue for each"
+					},
+					"response": []
+				},
+				{
+					"name": "Top N - Highest Revenue Venues",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Show me the top 5 venues by revenue\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Find and rank the top 5 venues by total revenue"
+					},
+					"response": []
+				},
+				{
+					"name": "Statistical Analysis - Correlation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What is the correlation between attendance and revenue?\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Calculate statistical correlation between attendance and revenue"
+					},
+					"response": []
+				},
+				{
+					"name": "Calculation - Revenue Per Attendee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Calculate the revenue per attendee for each concert\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Create a new calculated column showing revenue divided by attendance"
+					},
+					"response": []
+				},
+				{
+					"name": "TSV File Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What is the total sales from the TSV file?\",\n    \"filename\": \"test-sales.tsv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Query a TSV file (tab-separated values). The LLM will automatically detect and handle the TSV format."
+					},
+					"response": []
+				}
+			],
+			"description": "Examples of analyzing a single data file"
+		},
+		{
+			"name": "Data Analysis - Multiple Files",
+			"item": [
+				{
+					"name": "Compare Two Files - Revenue",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Compare total revenue between sales-data.csv and concert-sales.csv\",\n    \"filename\": \"sales-data.csv\",\n    \"additional_files\": [\"concert-sales.csv\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Compare revenue across two different CSV files"
+					},
+					"response": []
+				},
+				{
+					"name": "Multi-File - Attendance Differences",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What is the difference in average attendance between q2-sales.csv and concert-sales.csv?\",\n    \"filename\": \"q2-sales.csv\",\n    \"additional_files\": [\"concert-sales.csv\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Compare average attendance metrics across multiple datasets"
+					},
+					"response": []
+				},
+				{
+					"name": "Merge Multiple Files",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Combine all CSV files and calculate total revenue by country\",\n    \"filename\": \"sales-data.csv\",\n    \"additional_files\": [\"concert-sales.csv\", \"q2-sales.csv\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Merge multiple CSV files and perform aggregated analysis"
+					},
+					"response": []
+				},
+				{
+					"name": "Cross-File Analysis - Common Cities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Which cities appear in both sales-data.csv and concert-sales.csv?\",\n    \"filename\": \"sales-data.csv\",\n    \"additional_files\": [\"concert-sales.csv\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Find common values across multiple datasets"
+					},
+					"response": []
+				},
+				{
+					"name": "Multi-File - Top N Analysis",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Show me the top 10 concerts by revenue across all files\",\n    \"filename\": \"sales-data.csv\",\n    \"additional_files\": [\"concert-sales.csv\", \"q2-sales.csv\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Rank results across multiple data files"
+					},
+					"response": []
+				}
+			],
+			"description": "Examples of analyzing multiple data files together"
+		},
+		{
+			"name": "Advanced Queries",
+			"item": [
+				{
+					"name": "Complex Aggregation - Monthly Trends",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Group concerts by month and show total revenue, average attendance, and number of concerts for each month\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Complex multi-column aggregation with time-based grouping"
+					},
+					"response": []
+				},
+				{
+					"name": "Data Quality - Find Missing Values",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"Check for any missing or null values in the dataset and show which columns have them\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Data quality analysis to find missing values"
+					},
+					"response": []
+				},
+				{
+					"name": "Conditional Analysis - Filter and Aggregate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What is the average ticket price for concerts with attendance over 15,000?\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Filter data based on conditions and then aggregate"
+					},
+					"response": []
+				},
+				{
+					"name": "Percentile Analysis",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('task_id', response.task_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"What are the 25th, 50th, and 75th percentile values for revenue?\",\n    \"filename\": \"sales-data.csv\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["analyze"]
+						},
+						"description": "Calculate multiple percentiles for statistical analysis"
+					},
+					"response": []
+				}
+			],
+			"description": "Advanced data analysis queries demonstrating complex operations"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5001",
+			"type": "string"
+		},
+		{
+			"key": "task_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
