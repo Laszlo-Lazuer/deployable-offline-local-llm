@@ -215,7 +215,10 @@ def run_analysis_task(self, question, filename):
       cumulative = calculate_cumulative_inflation(2019, 2026)
       future_price = 100 * (1 + cumulative)
     
-    Execute the code now.
+    IMPORTANT: You MUST write Python code to answer this question. Do not just respond with text.
+    Write the necessary Python code, execute it, and provide the results with your analysis.
+    
+    Now write and execute the Python code to answer the user's question.
     """
 
     # Enable streaming to see progress
@@ -233,7 +236,7 @@ def run_analysis_task(self, question, filename):
 
     # Collect the full response while sending progress updates
     full_messages = []
-    current_content = ""
+    all_content = []  # Collect all message content regardless of role
 
     for chunk in response_stream:
         full_messages.append(chunk)
@@ -241,25 +244,25 @@ def run_analysis_task(self, question, filename):
         # Update progress in Redis for real-time monitoring
         if task_id and chunk.get('type') == 'message':
             content = chunk.get('content', '')
-            current_content += content
-
-            # Send progress update
-            if chunk.get('role') == 'assistant':
+            role = chunk.get('role', '')
+            
+            # Accumulate ALL message content (assistant, system, etc.)
+            if content:
+                all_content.append(content)
+                
+            # Send progress updates
+            if role == 'assistant':
                 # Truncate for progress display (show last 200 chars)
-                preview = current_content[-200:] if len(current_content) > 200 else current_content
+                full_text = ''.join(all_content)
+                preview = full_text[-200:] if len(full_text) > 200 else full_text
                 redis_client.setex(progress_key, 3600, f"Generating code... {preview}")
             elif chunk.get('format') == 'active_line':
                 # Execution progress
                 redis_client.setex(progress_key, 3600, f"Executing: {content}")
 
     # Extract the final answer from the response
-    final_answer = "Could not determine a final answer."
-    if full_messages and len(full_messages) > 0:
-        # Get the last message content
-        for msg in reversed(full_messages):
-            if msg.get('type') == 'message' and msg.get('content'):
-                final_answer = msg['content']
-                break
+    # Join all accumulated content
+    final_answer = ''.join(all_content) if all_content else "Could not determine a final answer."
 
     # Clear progress tracking
     if task_id:

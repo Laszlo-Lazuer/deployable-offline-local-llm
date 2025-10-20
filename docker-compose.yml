@@ -26,6 +26,9 @@ services:
     command: flask --app app run --host=0.0.0.0
 
   # The Celery worker (barista)
+  # Note: --concurrency=1 ensures sequential task processing to prevent CPU contention
+  # This provides predictable 4-5 minute completion times per task
+  # See CONCURRENCY.md for details
   worker:
     build: .
     container_name: worker

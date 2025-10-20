@@ -28,7 +28,7 @@ A microservices-based data analysis platform that uses Open Interpreter with Oll
 
 ### Hardware Requirements
 - **CPU**: x86_64 or ARM64 (Apple Silicon) multi-core processor
-- **RAM**: 8GB minimum, 16GB recommended
+- **RAM**: 8GB minimum, 16GB recommended (8K context requires ~1GB KV cache)
 - **Disk**: 10GB for images and models
 - **GPU**: **NOT REQUIRED** - This system runs entirely on CPU
 
@@ -46,6 +46,8 @@ A microservices-based data analysis platform that uses Open Interpreter with Oll
 - ✅ Works on any cloud provider (AWS, GCP, Azure, etc.)
 - ✅ No CUDA, ROCm, or GPU drivers needed
 - ✅ Runs on Kubernetes without GPU node pools
+- ✅ **Optimized for sequential processing** - Tasks complete in 4-5 minutes with `--concurrency=1`
+- ✅ **8K context window** - Handles large prompts without truncation
 - ⚠️ Inference is slower than GPU-accelerated solutions (~5-10 tokens/sec vs 50+ tokens/sec)
 - ⚠️ Best for low-to-medium throughput workloads
 
@@ -125,7 +127,7 @@ cd local-llm-celery
 
 ### Manual Setup
 
-### 1. Install Ollama and Pull the Model
+### 1. Install Ollama and Configure the Model
 
 ```bash
 # Install Ollama (macOS)
@@ -137,9 +139,22 @@ ollama serve
 # In another terminal, pull the llama3:8b model
 ollama pull llama3:8b
 
-# Verify Ollama is running
+# Configure 8K context window (prevents prompt truncation)
+cat > Modelfile << 'EOF'
+FROM llama3:8b
+PARAMETER num_ctx 8192
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+EOF
+
+# Create the configured model
+ollama create llama3:8b -f Modelfile
+
+# Verify Ollama is running with correct context
 curl http://localhost:11434/api/tags
 ```
+
+> **Important**: The 8K context window configuration prevents prompt truncation warnings and allows the LLM to process larger datasets and complex queries. The default 4K context can cause truncation with multi-file analysis.
 
 ### 2. Clone the Repository
 
@@ -191,8 +206,10 @@ podman run -d \
   --network llm-net \
   -v $(pwd)/data:/app/data:Z \
   local-llm-celery:dev \
-  celery -A worker.celery_app worker --loglevel=info
+  celery -A worker.celery_app worker --loglevel=info --concurrency=1
 ```
+
+> **Note**: `--concurrency=1` ensures sequential task processing, preventing CPU contention when multiple LLM tasks would compete for resources. This provides predictable 4-5 minute completion times per task. See [CONCURRENCY.md](CONCURRENCY.md) for details.
 
 ### 8. Verify Everything is Running
 
@@ -1161,6 +1178,9 @@ For detailed troubleshooting with diagnostic scripts and step-by-step solutions:
 - **[Multi-File Analysis](MULTI-FILE-ANALYSIS.md)** - Complete guide to analyzing multiple datasets simultaneously
 - **[Data Management API](DATA-API.md)** - Upload, update, and delete data files via REST API
 - **[Ollama Deployment Options](OLLAMA-DEPLOYMENT.md)** - Three deployment strategies for Ollama in Kubernetes
+- **[Concurrency & Performance](CONCURRENCY.md)** - Sequential vs parallel task processing, CPU optimization
+- **[Context Window Configuration](CONTEXT-WINDOW.md)** - 8K context setup, prevents prompt truncation
+- **[Performance Benchmarks](PERFORMANCE.md)** - Detailed CPU vs GPU performance comparison
 - **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
 - **[Kubernetes Deployment](k8s/README.md)** - Production deployment guide
 
